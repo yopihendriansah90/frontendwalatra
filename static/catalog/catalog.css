@@ -238,3 +238,4 @@ body.w-product-viewer-open{overflow:hidden}
 @media(max-width:767px) and (prefers-reduced-motion:reduce){.w-mobile-drawer,.w-mobile-drawer-backdrop,.w-mobile-drawer-panel{transition:none!important}}
 @keyframes w-viewer-appear{from{opacity:0}to{opacity:1}}
 @media(max-width:767px) and (prefers-reduced-motion:reduce){.w-product-viewer,.w-product-viewer-image{animation:none!important;transition:none!important}}
+.w-search input:hover,.w-search input:focus,.w-search input:active,.w-search button:hover,.w-search button:focus,.w-search button:active{border-color:#cdd5cf;box-shadow:none;outline:none!important;outline-offset:0}
