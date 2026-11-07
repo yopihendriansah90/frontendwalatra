@@ -1,0 +1,20 @@
+{
+  "name": "walatra-herbal-frontend",
+  "type": "module",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "predev": "npm run build",
+    "dev": "node scripts/serve-local.mjs",
+    "build": "node scripts/build-local.mjs",
+    "start": "node scripts/serve-local.mjs",
+    "preview": "node scripts/serve-local.mjs",
+    "verify": "python3 scripts/verify.py",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "python3 tests/catalog-browser.py",
+    "package": "bash scripts/package.sh"
+  },
+  "dependencies": {
+    "sweetalert2": "^11.26.25"
+  }
+}

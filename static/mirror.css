@@ -1,0 +1,167 @@
+.static-notice{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483647;max-width:calc(100vw - 32px);padding:12px 20px;background:#35593f;color:#fff;border-radius:8px;box-shadow:0 4px 18px #0003;font:14px/1.5 sans-serif}
+.static-search-results{position:absolute;top:100%;left:0;right:0;z-index:10000;background:#fff;border:1px solid #ddd;border-radius:6px;max-height:360px;overflow:auto;box-shadow:0 4px 12px #0002}
+.static-search-results a{display:block;padding:10px 14px;color:#00856d;text-decoration:none}
+.static-search-results a:hover,.static-search-results a:focus{background:#e4f3ea}
+
+/* Walatra palette: color overrides only; the captured layout and assets stay intact. */
+:root {
+  --walatra-primary: #075446;
+  --walatra-hover: #043f35;
+  --walatra-accent: #80c522;
+  --walatra-page: #f7f8f4;
+  --walatra-surface: #fff;
+  --walatra-ink: #203a32;
+  --walatra-border: #dce5dc;
+  --green-nf: var(--walatra-primary);
+  --green-dark-nf: var(--walatra-primary);
+  --green-dope-nf: var(--walatra-hover);
+  --green-transparent-nf: #e7eee3;
+  --gray-transparet: var(--walatra-page);
+  --border-soft: var(--walatra-border);
+  --swiper-theme-color: var(--walatra-primary) !important;
+}
+
+body { background-color: var(--walatra-page); color: var(--walatra-ink); }
+.bg-light { background-color: var(--walatra-page) !important; }
+.bg-white, .card, .form-control, .custom-select, .static-search-results {
+  background-color: var(--walatra-surface);
+}
+.text-dark, .text-body { color: var(--walatra-ink) !important; }
+.form-control, .custom-select, .dropdown-item, .table, .modal-content {
+  color: var(--walatra-ink);
+}
+.border, .border-top, .border-bottom, .border-left, .border-right,
+.card, .form-control, .custom-select, .dropdown-menu, .modal-content,
+.page-link, .static-search-results {
+  border-color: var(--walatra-border) !important;
+}
+.form-control:focus, .custom-select:focus {
+  border-color: var(--walatra-primary) !important;
+}
+
+:root :is(a, a:hover, .page-link, .static-search-results a,
+.text-green-500, .text-green-600, .text-dark-green-nf, .text-dark-greeen-nf,
+.price-current, .text-brand, .text-point, .link-active, .category-link,
+.footer-content__html a, .footer-content__toggle,
+.detail-content-article a, .detail-content-article a strong,
+.detail-content-article p strong a, .footer-article-card .author,
+.author .author-name, .text-cta-authors, .show-more-link,
+.pd-tab.is-active, .pst-tab.is-active, .pd-toggle, .tab-item.active,
+.nav-tab-item.active, .sort-content span.active, .url-active a,
+.voucher-see-all, .voucher-detail, .voucher-nav, .view-all span,
+.free-detail, .free-text--mobile, .fbt-price-net,
+.btn-keranjang, .qty-btn, .pcb-nav-next, .pcb-nav-prev,
+.btn-primary-nf-outline, .btn-outline-green-500, .btn-outline-green-600,
+.pab-btn--outline, .green-nf-outline, .btn-ghost-green-nf,
+.search-icon, .icon-search, .icon-chevron-right, .cert-chevron,
+.buy-more-chevron, .free-icon, .free-chevron, .fbt-coupon-icon,
+.wrapper-store:hover .title-store, .nuxt-link:hover .products-title,
+.blog-card:hover .title-article) {
+  color: var(--walatra-primary);
+}
+
+:root :is(.bg-dark-green-nf, .bg-flash-sale, .bg-flashsale-green,
+.bg-green-600, .member-bar, .member-badge, .content-inner .coupon-code,
+.btn-primary-green-nf, .btn-primary-green, .btn-green-500,
+.btn-buy, .btn-buy-now, .btn-keranjang + .btn-buy,
+.btn-dark-green-nf, .btn-green-dark-nf-custom, .pab-btn--solid,
+.btn-cta, .btn-claim, .btn-copy, .btn-review, .btn-use-voucher,
+.btn-checkin, .btn-download-app, .btn-game-shop-now, .btn-tnc,
+.reel-cta, .static-notice, .btn-login) {
+  background-color: var(--walatra-primary);
+}
+:root :is(.btn-primary-green-nf, .btn-primary-green, .btn-green-500,
+.btn-buy, .btn-buy-now, .btn-dark-green-nf, .btn-green-dark-nf-custom,
+.pab-btn--solid, .btn-cta, .btn-claim, .btn-copy, .btn-review,
+.btn-use-voucher, .btn-checkin, .btn-download-app, .btn-game-shop-now,
+.btn-tnc, .reel-cta, .static-notice, .btn-login) {
+  color: var(--walatra-surface) !important;
+}
+.btn-green-nf:hover, .btn-green-nf:focus, .btn-green-nf:active,
+.btn-green-dark-nf:hover, .btn-green-dark-nf:focus, .btn-green-dark-nf:active,
+.btn-primary-green-nf:hover, .btn-primary-green:hover,
+.btn-green-500:hover, .btn-buy:hover, .btn-buy-now:hover,
+.pab-btn--solid:hover, .btn-cta:hover, .btn-claim:hover,
+.btn-dark-green-nf:hover, .btn-green-dark-nf-custom:hover, .btn-login:hover {
+  background-color: var(--walatra-hover) !important;
+  border-color: var(--walatra-hover) !important;
+  color: var(--walatra-surface) !important;
+}
+.btn-outline-green-nf:hover, .btn-outline-green-dark-nf:hover,
+.btn-primary-nf-outline:hover, .btn-outline-green-500:hover,
+.btn-outline-green-600:hover {
+  background-color: var(--walatra-primary) !important;
+  border-color: var(--walatra-primary) !important;
+  color: var(--walatra-surface) !important;
+}
+:root :is(.border-green-nf, .border-green-500, .border-color-green,
+.btn-primary-green-nf, .btn-green-500, .btn-primary-nf-outline,
+.btn-outline-green-500, .btn-outline-green-600,
+.btn-buy, .btn-keranjang, .pab-btn--solid, .pab-btn--outline,
+.green-nf-outline, .variant-chip.active, .variant-chip--active,
+.variant-chip:hover, .form-check-input:focus, .form-check-input:hover) {
+  border-color: var(--walatra-primary) !important;
+}
+:root :is(.variant-chip.active, .variant-chip--active, .variant-chip:hover) {
+  color: var(--walatra-primary);
+}
+.swiper-pagination-bullet-active, .pd-underline, .pst-underline,
+.tabs-underline, .tab-indicator, .green-line, .title-underline:after,
+.tab-active:after, .custom-progress-bar-green .progress-bar {
+  background-color: var(--walatra-primary) !important;
+}
+.nav-tabs .nav-link.active, .nav-tabs .nav-link:hover,
+.nav-tabs .nav-link:focus {
+  border-bottom-color: var(--walatra-primary);
+}
+.page-item.active .page-link, .custom-pagination-blog .page-item.active .page-link {
+  background-color: var(--walatra-primary) !important;
+  border-color: var(--walatra-primary) !important;
+  color: var(--walatra-surface) !important;
+}
+.form-check-input:checked, .form-check-input-custom:checked {
+  background-color: var(--walatra-primary) !important;
+  border-color: var(--walatra-primary) !important;
+}
+.form-check-input-custom { border-color: var(--walatra-primary); }
+
+/* Leaf green is reserved for light accents, with dark text for contrast. */
+.bg-green-500, .bg-green-500.text-white, .btn-green-600 {
+  background-color: var(--walatra-accent) !important;
+  color: var(--walatra-ink) !important;
+}
+.btn-green-600 { border-color: var(--walatra-primary); }
+.btn-green-600:hover {
+  background-color: var(--walatra-primary) !important;
+  color: var(--walatra-surface) !important;
+}
+.static-search-results a:hover, .static-search-results a:focus,
+.bg-green-primary-500-op01, .offering-product .selected-offering {
+  background-color: #e7eee3 !important;
+  color: var(--walatra-primary);
+}
+svg [fill="#0d806a"], svg [fill="#008069"] { fill: var(--walatra-primary); }
+svg [stroke="#0d806a"], svg [stroke="#008069"] { stroke: var(--walatra-primary); }
+::-webkit-scrollbar-thumb, ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--walatra-primary);
+}
+
+:root .header-top {
+  background-color: var(--walatra-primary);
+  color: var(--walatra-surface);
+}
+:root .header-top .text-top-right,
+:root .header-top .text-top-left,
+:root .header-top .trigger {
+  color: var(--walatra-surface) !important;
+}
+.header-top .text-top-right img {
+  filter: brightness(0) invert(1);
+}
+/* A leaf-green underline keeps hover feedback distinct and small text readable. */
+:root .header-top .text-top-right:hover,
+:root .header-top .text-top-right:focus-visible {
+  color: var(--walatra-surface) !important;
+  text-decoration-line: underline !important;
+  text-decoration-color: var(--walatra-accent) !important;
+}

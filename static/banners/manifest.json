@@ -1,0 +1,159 @@
+{
+  "hero": [
+    {
+      "src": "/banners/2188.jpg",
+      "alt": "OTW 31",
+      "archived": true,
+      "width": 3071,
+      "height": 1250
+    },
+    {
+      "src": "/banners/2192.jpg",
+      "alt": "LAUNCH ISOPURE",
+      "archived": true,
+      "width": 737,
+      "height": 300
+    },
+    {
+      "src": "/banners/2186.jpeg",
+      "alt": "NW Glycinate Bundle",
+      "archived": true,
+      "width": 780,
+      "height": 300
+    },
+    {
+      "src": "/banners/2183.jpg",
+      "alt": "ON FREE KAOS",
+      "archived": true,
+      "width": 737,
+      "height": 300
+    },
+    {
+      "src": "/banners/2179.jpeg",
+      "alt": "Redeem CL",
+      "archived": true,
+      "width": 3071,
+      "height": 1250
+    },
+    {
+      "src": "/banners/2182.jpg",
+      "alt": "ON 3 lb",
+      "archived": true,
+      "width": 737,
+      "height": 300
+    },
+    {
+      "src": "/banners/1927.jpg",
+      "alt": "BIO OIL",
+      "archived": true,
+      "width": 1536,
+      "height": 626
+    },
+    {
+      "src": "/banners/1458.jpeg",
+      "alt": "newbie deals",
+      "archived": true,
+      "width": 999,
+      "height": 407
+    },
+    {
+      "src": "/banners/2195.jpeg",
+      "alt": "Top Spender Program",
+      "archived": true,
+      "width": 1965,
+      "height": 800
+    }
+  ],
+  "side": [
+    {
+      "src": "/banners/1965.jpeg",
+      "alt": "factory sale",
+      "archived": true,
+      "width": 500,
+      "height": 197
+    },
+    {
+      "src": "/banners/2187.jpg",
+      "alt": "t shirt on",
+      "archived": true,
+      "width": 367,
+      "height": 145
+    }
+  ],
+  "strip": [
+    {
+      "src": "/banners/strip-12.webp",
+      "alt": "Banner arsip",
+      "archived": true,
+      "width": 1400,
+      "height": 129
+    }
+  ],
+  "mini": [
+    {
+      "src": "/banners/1793.jpeg",
+      "alt": "ISOPURE100",
+      "archived": true,
+      "width": 600,
+      "height": 500
+    },
+    {
+      "src": "/banners/2194.jpg",
+      "alt": "LAUNCH ISOPURE",
+      "archived": true,
+      "width": 180,
+      "height": 150
+    },
+    {
+      "src": "/banners/2191.jpg",
+      "alt": "OTW 31",
+      "archived": true,
+      "width": 750,
+      "height": 625
+    },
+    {
+      "src": "/banners/1929.jpg",
+      "alt": "BIO OIL",
+      "archived": true,
+      "width": 376,
+      "height": 314
+    },
+    {
+      "src": "/banners/2139.jpg",
+      "alt": "VITAMIN100",
+      "archived": true,
+      "width": 180,
+      "height": 150
+    },
+    {
+      "src": "/banners/2185.jpg",
+      "alt": "ON FREE KAOS",
+      "archived": true,
+      "width": 180,
+      "height": 150
+    }
+  ],
+  "bottom": [
+    {
+      "src": "/banners/2180.jpeg",
+      "alt": "redeem CL",
+      "archived": true,
+      "width": 1521,
+      "height": 625
+    },
+    {
+      "src": "/banners/2189.jpg",
+      "alt": "OTW 31",
+      "archived": true,
+      "width": 1521,
+      "height": 625
+    },
+    {
+      "src": "/banners/2064.jpg",
+      "alt": "VIT50",
+      "archived": true,
+      "width": 365,
+      "height": 150
+    }
+  ]
+}

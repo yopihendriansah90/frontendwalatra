@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "browser": "Playwright Chromium",
+  "auth_api": "Mock implementation of doc/01-authentication.md; no live OTP sent",
+  "checks": [
+    "Request OTP stores challenge id, expiry and phone; does not require data.otp in production",
+    "Optional data.otp is surfaced only when the API returns it for local/testing",
+    "Invalid OTP 422 leaves the challenge available for correction",
+    "Valid OTP creates an opaque HttpOnly SameSite=Lax cookie; Sanctum token is never returned to browser",
+    "GET auth/me, PATCH customer profile and POST logout use the server-held Bearer token",
+    "Profile completion redirects to the profile form; profile view displays name and WhatsApp number",
+    "Logout revokes backend token and removes browser session cookie",
+    "No horizontal overflow at 320, 390, 767, 768, 1024, or 1440px",
+    "No JavaScript exceptions or unexpected console errors; 401/422 responses were expected validation/session states"
+  ],
+  "screenshots": [
+    "evidence/catalog/auth-login-mobile.png",
+    "evidence/catalog/auth-login-desktop.png",
+    "evidence/catalog/auth-profile-mobile.png"
+  ]
+}

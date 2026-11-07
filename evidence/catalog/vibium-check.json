@@ -1,0 +1,147 @@
+{
+  "passed": true,
+  "browser": "Vibium headless Chrome",
+  "base_url": "http://127.0.0.1:9000",
+  "checks": [
+    {
+      "name": "Beranda memakai API banner bila tersedia; API data kosong menampilkan banner snapshot cadangan",
+      "passed": true
+    },
+    {
+      "name": "Katalog menampilkan 15 listing pada halaman pertama dengan key unik product:listing_id/bundle:listing_id",
+      "passed": true
+    },
+    {
+      "name": "Pencarian Proskin melalui Enter membuka /search/?q=Proskin dengan 1 hasil",
+      "passed": true
+    },
+    {
+      "name": "Detail produk Proskin memakai listing 28, 1 pilihan varian, dan harga dari API",
+      "passed": true
+    },
+    {
+      "name": "Kategori Pencernaan memakai icon_url API dan menampilkan 2 listing",
+      "passed": true
+    },
+    {
+      "name": "Bundle Paket Herbal Keluarga menampilkan 3 komponen dan harga bundle",
+      "passed": true
+    },
+    {
+      "name": "Viewport 390px menjaga kategori satu baris scrollable tanpa overflow halaman",
+      "passed": true
+    },
+    {
+      "name": "Menu ponsel membuka 11 kategori dan tertutup oleh tombol Escape",
+      "passed": true
+    },
+    {
+      "name": "Form filter tidak memiliki field pencarian; q navbar tetap tampil dan dipertahankan saat filter diterapkan/reset",
+      "passed": true
+    },
+    {
+      "name": "Detail produk menampilkan penawaran toko sebagai label tanpa kontrol pilihan",
+      "passed": true
+    },
+    {
+      "name": "Pilihan varian menampilkan nama saja; memilih varian memperbarui harga dan URL",
+      "passed": true
+    },
+    {
+      "name": "API live Sehat Wanita menampilkan varian tanpa elemen foto bila image_url null, pilihan hijau mengubah harga tanpa mengganti node detail",
+      "passed": true
+    },
+    {
+      "name": "Varian live yang image_url-nya null tetap menampilkan nama saja, tanpa label atau placeholder gambar",
+      "passed": true
+    },
+    {
+      "name": "Pilihan varian memakai tombol kotak yang wrapping, outline aktif ala Shopee, dan foto tetap 24px",
+      "passed": true
+    },
+    {
+      "name": "Deskripsi Keloreena dari API live dirender sebagai paragraf, heading, dan list tanpa menampilkan tag HTML mentah",
+      "passed": true
+    },
+    {
+      "name": "Galeri foto Keloreena tetap di halaman tanpa dialog; thumbnail mengubah foto utama",
+      "passed": true
+    },
+    {
+      "name": "Vibium: API lokal mengembalikan data kosong; hero snapshot /banners/2188.jpg dan dua banner samping tetap tampil",
+      "passed": true
+    },
+    {
+      "name": "Vibium live: banner position main masuk slot besar kiri, secondary_top kanan atas, secondary_bottom kanan bawah; CTA mengikuti respons API",
+      "passed": true
+    },
+    {
+      "name": "Vibium: carousel banner main otomatis berpindah ke banner berikutnya setelah 3 detik",
+      "passed": true
+    },
+    {
+      "name": "Vibium: indikator dot tetap tampil di atas banner setelah transisi horizontal dan menandai slide aktif",
+      "passed": true
+    },
+    {
+      "name": "Vibium mobile: tombol Previous/Next tersembunyi, swipe kiri maju dan swipe kanan kembali, dot dirapatkan",
+      "passed": true
+    },
+    {
+      "name": "Vibium mobile: swipe kanan menggeser slide ke kanan dan swipe kiri menggeser slide ke kiri",
+      "passed": true
+    },
+    {
+      "name": "Vibium desktop: banner secondary mempertahankan slot kanan atas/bawah, transisi transform vertikal, tanpa tombol Previous/Next",
+      "passed": true
+    },
+    {
+      "name": "Vibium: dot dan panah secondary dihilangkan, dot main tetap tampil",
+      "passed": true
+    },
+    {
+      "name": "Vibium desktop: navbar fixed saat scroll, kategori tanpa ikon dan scrollbar, teks kategori sama ukuran/warna dengan Semua Produk",
+      "passed": true
+    },
+    {
+      "name": "Vibium katalog: jumlah hasil memakai label produk",
+      "passed": true
+    },
+    {
+      "name": "Vibium login desktop: standalone form tanpa navbar/footer dan tanpa section Produk Terbaru",
+      "passed": true
+    },
+    {
+      "name": "Vibium login mobile: internal navbar disembunyikan, form utuh tanpa overflow dan tanpa produk",
+      "passed": true
+    },
+    {
+      "name": "Vibium login desktop/mobile: tombol Login dan Register memakai warna primary Walatra #075446",
+      "passed": true
+    },
+    {
+      "name": "Vibium login: pesan akun guest Natural Farm dan aktivasi akun tidak tampil",
+      "passed": true
+    },
+    {
+      "name": "Vibium login: tombol Register tidak tampil pada halaman mandiri",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    "evidence/catalog/vibium-final-home.png",
+    "evidence/catalog/vibium-final-mobile.png",
+    "evidence/catalog/vibium-final-detail.png",
+    "evidence/catalog/vibium-final-variants.png",
+    "evidence/catalog/vibium-final-detail.png",
+    "evidence/catalog/vibium-banner-fallback.png",
+    "evidence/catalog/vibium-banner-positions.png",
+    "evidence/catalog/vibium-banner-autoscroll.png",
+    "evidence/catalog/vibium-banner-dots.png",
+    "evidence/catalog/vibium-banner-touch-mobile.png",
+    "evidence/catalog/vibium-banner-secondary-vertical.png",
+    "evidence/catalog/vibium-navbar-desktop.png",
+    "evidence/catalog/vibium-login-mobile.png",
+    "evidence/catalog/vibium-login-full-page.png"
+  ]
+}

@@ -1,0 +1,9 @@
+.capture/
+__pycache__/
+*.log
+.env
+.dist.next/
+.walatra-preview/
+dist/
+naturalfarm-static.tar.gz*
+walatra-herbal-frontend.tar.gz*

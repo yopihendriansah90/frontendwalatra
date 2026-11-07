@@ -1,0 +1,1 @@
+/* External tracking and notification services are omitted from the static archive. */

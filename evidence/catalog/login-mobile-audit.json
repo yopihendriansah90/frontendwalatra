@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "browser": "Playwright Chromium",
+  "base_url": "http://127.0.0.1:9000/login/",
+  "checks": [
+    "Mobile-first login card, logo and form centered; WhatsApp label visible; back button absent",
+    "No horizontal overflow at 320, 390, 767, 768, 1024, 1440px",
+    "OTP CTA disabled until 8 digits, Enter submits and opens SweetAlert backend-status notice, Escape closes",
+    "Input focus outline visible; disabled CTA contrast preserved",
+    "Desktop two-panel layout retained without overflow; no page or console errors"
+  ],
+  "page_errors": [],
+  "console_errors": [],
+  "contrast_ratios": {
+    "primary_text": "12.26:1",
+    "helper_text": "6.07:1",
+    "disabled_cta": "5.59:1",
+    "enabled_cta": "8.88:1"
+  },
+  "screenshots": [
+    "evidence/catalog/vibium-login-otp-mobile.png",
+    "evidence/catalog/vibium-login-otp.png"
+  ]
+}

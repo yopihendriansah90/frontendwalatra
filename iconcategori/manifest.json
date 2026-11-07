@@ -1,0 +1,54 @@
+{
+  "brand": "Walatra Herbal",
+  "palette": [
+    "#075446",
+    "#80C522",
+    "#E7EEE3"
+  ],
+  "icons": [
+    {
+      "category": "Pencernaan",
+      "file": "pencernaan.png"
+    },
+    {
+      "category": "Pernapasan",
+      "file": "pernapasan.png"
+    },
+    {
+      "category": "Pernapasan dan Tenggorokan",
+      "file": "pernapasan-dan-tenggorokan.png"
+    },
+    {
+      "category": "Daya Tahan Tubuh",
+      "file": "daya-tahan-tubuh.png"
+    },
+    {
+      "category": "Sendi dan Otot",
+      "file": "sendi-dan-otot.png"
+    },
+    {
+      "category": "Kesehatan Wanita",
+      "file": "kesehatan-wanita.png"
+    },
+    {
+      "category": "Nutrisi dan Kebugaran",
+      "file": "nutrisi-dan-kebugaran.png"
+    },
+    {
+      "category": "Kesehatan Kulit",
+      "file": "kesehatan-kulit.png"
+    },
+    {
+      "category": "Kesehatan Mata",
+      "file": "kesehatan-mata.png"
+    },
+    {
+      "category": "Vitalitas Pria",
+      "file": "vitalitas-pria.png"
+    },
+    {
+      "category": "Kategori Tes Vibium Superadmin",
+      "file": "kategori-tes-vibium-superadmin.png"
+    }
+  ]
+}

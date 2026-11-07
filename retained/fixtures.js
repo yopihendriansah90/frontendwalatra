@@ -1,0 +1,1 @@
+window.__RETAINED_FIXTURES__={"api.naturalfarm.id/api/select2/region-store?": "/_fixtures/49c93ec132ca4c1142fbd629.json", "api.naturalfarm.id/api/storelocation?page=1": "/_fixtures/fb95a5fb79fe0453a70bd975.json"};

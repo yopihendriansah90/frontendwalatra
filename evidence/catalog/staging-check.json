@@ -1,0 +1,235 @@
+{
+  "passed": true,
+  "count": 57,
+  "checks": [
+    {
+      "name": "Home categories follow API including test category",
+      "passed": true
+    },
+    {
+      "name": "Homepage categories stay in one horizontal scrolling row",
+      "passed": true
+    },
+    {
+      "name": "Active homepage banners use API images",
+      "passed": true
+    },
+    {
+      "name": "Banner controls switch active banner source",
+      "passed": true
+    },
+    {
+      "name": "Live API positions render into exact banner slots",
+      "passed": true
+    },
+    {
+      "name": "Banner remains visible after homepage reload",
+      "passed": true
+    },
+    {
+      "name": "API category icons are used",
+      "passed": true
+    },
+    {
+      "name": "Only current API listings appear",
+      "passed": true
+    },
+    {
+      "name": "No archived sale claims remain",
+      "passed": true
+    },
+    {
+      "name": "Enter search uses q and live data",
+      "passed": true
+    },
+    {
+      "name": "Search reload preserves results",
+      "passed": true
+    },
+    {
+      "name": "Server pagination changes URL and result",
+      "passed": true
+    },
+    {
+      "name": "Back restores pagination",
+      "passed": true
+    },
+    {
+      "name": "Forward restores pagination",
+      "passed": true
+    },
+    {
+      "name": "Product detail preserves listing and has variants",
+      "passed": true
+    },
+    {
+      "name": "Bundle detail displays components",
+      "passed": true
+    },
+    {
+      "name": "Unknown slug displays 404 state",
+      "passed": true
+    },
+    {
+      "name": "Legacy find normalizes and empty results are honest",
+      "passed": true
+    },
+    {
+      "name": "Archived article remains readable",
+      "passed": true
+    },
+    {
+      "name": "Health tool remains interactive",
+      "passed": true
+    },
+    {
+      "name": "Mobile category menu exposes API categories",
+      "passed": true
+    },
+    {
+      "name": "Escape closes mobile menu",
+      "passed": true
+    },
+    {
+      "name": "Mobile icon search works",
+      "passed": true
+    },
+    {
+      "name": "Mobile categories stay in one horizontally scrollable row",
+      "passed": true
+    },
+    {
+      "name": "Mobile layout stays within viewport",
+      "passed": true
+    },
+    {
+      "name": "No JavaScript errors, legacy API requests or writes",
+      "passed": true
+    },
+    {
+      "name": "Empty API response falls back to retained banner snapshot",
+      "passed": true
+    },
+    {
+      "name": "Banner positions map main, secondary top and bottom to matching slots",
+      "passed": true
+    },
+    {
+      "name": "Banner CTA target settings follow API for main and secondary slots",
+      "passed": true
+    },
+    {
+      "name": "Multiple main banners rotate only inside main area",
+      "passed": true
+    },
+    {
+      "name": "Product/bundle listing identities do not collide",
+      "passed": true
+    },
+    {
+      "name": "Missing images show placeholders",
+      "passed": true
+    },
+    {
+      "name": "Selected listing/variant, store label and decimal price follow response",
+      "passed": true
+    },
+    {
+      "name": "Variant badges show names without prices",
+      "passed": true
+    },
+    {
+      "name": "Variant without an image shows only its name",
+      "passed": true
+    },
+    {
+      "name": "Variant photos are twice the variant text size",
+      "passed": true
+    },
+    {
+      "name": "Gallery combines storefront and variant photos",
+      "passed": true
+    },
+    {
+      "name": "Main image links to original in a secure new tab",
+      "passed": true
+    },
+    {
+      "name": "Gallery stays inline without a popup viewer",
+      "passed": true
+    },
+    {
+      "name": "Gallery thumbnail changes main image and original link inline",
+      "passed": true
+    },
+    {
+      "name": "Selected variant photo shows first and desktop description sits below the gallery",
+      "passed": true
+    },
+    {
+      "name": "Description HTML is formatted safely",
+      "passed": true
+    },
+    {
+      "name": "Variant selection updates URL, price and photo without rebuilding detail",
+      "passed": true
+    },
+    {
+      "name": "Variant without a photo is selectable and updates its price",
+      "passed": true
+    },
+    {
+      "name": "Selected variant uses Walatra green accent",
+      "passed": true
+    },
+    {
+      "name": "Store offer is informational, not a user selection",
+      "passed": true
+    },
+    {
+      "name": "Empty stores do not create a purchase choice",
+      "passed": true
+    },
+    {
+      "name": "Category parent/children and direct category filter are respected",
+      "passed": true
+    },
+    {
+      "name": "Null category icons keep category names",
+      "passed": true
+    },
+    {
+      "name": "Broken category icons use neutral fallback",
+      "passed": true
+    },
+    {
+      "name": "Updated category icon appears without build",
+      "passed": true
+    },
+    {
+      "name": "422 validation message is visible",
+      "passed": true
+    },
+    {
+      "name": "429 respects cooldown",
+      "passed": true
+    },
+    {
+      "name": "Retry becomes available after Retry-After",
+      "passed": true
+    },
+    {
+      "name": "Retry and empty state work",
+      "passed": true
+    },
+    {
+      "name": "Network failure offers retry without archive fallback",
+      "passed": true
+    },
+    {
+      "name": "Contract scenarios have no JavaScript errors",
+      "passed": true
+    }
+  ],
+  "live_api": "http://127.0.0.1:8000/api/v1"
+}
