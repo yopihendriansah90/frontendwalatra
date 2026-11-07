@@ -26,7 +26,7 @@ function icon(name){
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('aria-hidden','true');
   const path=document.createElementNS(svg.namespaceURI,'path');
-  const shapes={search:'M21 21l-6-6M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z',user:'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z',home:'m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',bag:'M5 8h14l1 13H4L5 8Zm4 0a3 3 0 0 1 6 0',grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',menu:'M4 6h16M4 12h16M4 18h16',close:'m6 6 12 12M18 6 6 18',phone:'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L7.5 9.6a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.6 1.9Z',logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',chevron:'m9 18 6-6-6-6',mail:'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 1 8 6 8-6',pin:'M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0ZM12 10h.01',plus:'M12 5v14M5 12h14',edit:'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z',trash:'M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6',star:'m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z',image:'M3 3h18v18H3zM3 17l6-6 5 5 3-3 4 4M9 7h.01'};
+  const shapes={search:'M21 21l-6-6M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z',user:'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z',home:'m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',bag:'M5 8h14l1 13H4L5 8Zm4 0a3 3 0 0 1 6 0',grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',filter:'M3 5h18l-7 8v5l-4 2v-7L3 5z',menu:'M4 6h16M4 12h16M4 18h16',close:'m6 6 12 12M18 6 6 18',phone:'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L7.5 9.6a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.6 1.9Z',logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',chevron:'m9 18 6-6-6-6',mail:'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 1 8 6 8-6',pin:'M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0ZM12 10h.01',plus:'M12 5v14M5 12h14',edit:'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z',trash:'M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6',star:'m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z',image:'M3 3h18v18H3zM3 17l6-6 5 5 3-3 4 4M9 7h.01'};
   path.setAttribute('d',shapes[name]||shapes.image);svg.append(path);return svg;
 }
 function placeholder(){return el('div',{class:'w-no-image',role:'img','aria-label':'Gambar belum tersedia'},icon('image'),el('span',{},'Gambar belum tersedia'));}
@@ -86,7 +86,8 @@ function closeMenus({restoreFocus=false}={}){
 }
 function openMobileDrawer(section='menu'){
   const drawer=$('.w-mobile-drawer'),toggle=$('.w-mobile-toggle');if(!drawer)return;
-  drawer.hidden=false;drawer.inert=false;drawer.setAttribute('aria-hidden','false');drawer.dataset.section=section;document.body.classList.add('w-drawer-open');toggle?.setAttribute('aria-expanded','true');requestAnimationFrame(()=>{if(!drawer.hidden&&!drawer.inert){drawer.classList.add('is-open');$('.w-mobile-drawer-close',drawer)?.focus();}});
+  const view=toggle?.dataset.mode==='filters'&&section==='menu'?'filters':section;
+  drawer.hidden=false;drawer.inert=false;drawer.setAttribute('aria-hidden','false');drawer.dataset.section=view;drawer.classList.toggle('is-filter',view==='filters');$('.w-mobile-drawer-menu',drawer).hidden=view==='filters';$('.w-mobile-filter-view',drawer).hidden=view!=='filters';document.body.classList.add('w-drawer-open');toggle?.setAttribute('aria-expanded','true');requestAnimationFrame(()=>{if(!drawer.hidden&&!drawer.inert){drawer.classList.add('is-open');$('.w-mobile-drawer-close',drawer)?.focus();}});
 }
 function mobileNavigation(){
   const current=location.pathname.replace(/\/$/,'')||'/';
@@ -106,10 +107,22 @@ function syncMobileNavigation(path){
 }
 function mountMobileDrawer(toggle){
   const close=()=>closeMenus({restoreFocus:true});
-  const drawer=el('div',{class:'w-mobile-drawer',hidden:true,'aria-hidden':'true',inert:true},el('button',{class:'w-mobile-drawer-backdrop',type:'button','aria-label':'Tutup menu',onclick:close}),el('nav',{class:'w-mobile-drawer-panel','aria-label':'Menu mobile'},el('div',{class:'w-mobile-drawer-heading'},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('button',{class:'w-mobile-drawer-close w-icon-button',type:'button','aria-label':'Tutup menu',onclick:close},icon('close'))),el('div',{class:'w-mobile-drawer-links'},link('/product/','Semua Produk'),link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('/health-tools/','Cek Kesehatan'),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')),el('section',{class:'w-mobile-drawer-categories','aria-labelledby':'w-mobile-categories-title'},el('h2',{id:'w-mobile-categories-title'},'Kategori'),el('div',{class:'w-mobile-category-links'},el('p',{class:'w-category-status',role:'status'},'Memuat kategori…')))));
+  const menu=el('div',{class:'w-mobile-drawer-menu'},el('div',{class:'w-mobile-drawer-links'},link('/product/','Semua Produk'),link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('/health-tools/','Cek Kesehatan'),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')),el('section',{class:'w-mobile-drawer-categories','aria-labelledby':'w-mobile-categories-title'},el('h2',{id:'w-mobile-categories-title'},'Kategori'),el('div',{class:'w-mobile-category-links'},el('p',{class:'w-category-status',role:'status'},'Memuat kategori…'))));
+  const filters=el('section',{class:'w-mobile-filter-view',hidden:true},el('h2',{},'Filter produk'),el('div',{class:'w-mobile-filter-slot'},state('Menyiapkan filter…')));
+  const drawer=el('div',{id:'w-mobile-drawer',class:'w-mobile-drawer',hidden:true,'aria-hidden':'true',inert:true},el('button',{class:'w-mobile-drawer-backdrop',type:'button','aria-label':'Tutup panel',onclick:close}),el('nav',{class:'w-mobile-drawer-panel','aria-label':'Menu mobile'},el('div',{class:'w-mobile-drawer-heading'},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('button',{class:'w-mobile-drawer-close w-icon-button',type:'button','aria-label':'Tutup panel',onclick:close},icon('close'))),menu,filters));
   drawer.hidden=true;drawer.inert=true;drawer.addEventListener('click',event=>{if(event.target.closest('a'))closeMenus();});
-  toggle.addEventListener('click',()=>{if(drawer.hidden)openMobileDrawer('menu');else closeMenus();});
+  toggle.addEventListener('click',()=>{if(drawer.hidden)openMobileDrawer(toggle.dataset.mode==='filters'?'filters':'menu');else closeMenus();});
   header.append(drawer);return drawer;
+}
+function syncMobileDrawerMode(path){
+  const toggle=$('.w-mobile-toggle'),drawer=$('.w-mobile-drawer'),isCategoryList=path.startsWith('/cat/'),isCatalogList=path==='/product'||isCategoryList;if(!toggle||!drawer)return;
+  document.body.classList.toggle('w-mobile-filter-list-page',isCatalogList);toggle.dataset.mode=isCatalogList?'filters':'menu';toggle.setAttribute('aria-label',isCatalogList?`Buka filter ${isCategoryList?'kategori':'produk'}`:'Buka menu');toggle.replaceChildren(icon(isCatalogList?'filter':'menu'));
+  let badge=$('.w-mobile-filter-count',toggle);if(!badge){badge=el('span',{class:'w-mobile-filter-count','aria-hidden':'true'});toggle.append(badge);}
+  const params=paramsFromURL(location.href),filterKeys=isCategoryList?['type','store','min_price','max_price']:['type','category','store','min_price','max_price'],count=filterKeys.filter(key=>params.has(key)&&params.get(key)!=='').length;
+  badge.textContent=count?String(count):'';badge.hidden=count===0;
+  drawer.setAttribute('aria-label',isCatalogList?`Filter ${isCategoryList?'kategori':'produk'}`:'Menu mobile');
+  $('.w-mobile-filter-view > h2',drawer).textContent=isCategoryList?'Filter kategori':'Filter produk';
+  if(drawer.dataset.section==='filters'&&!isCatalogList)closeMenus();
 }
 function mountHeader(){
   const menu=el('details',{class:'w-menu',id:'w-category-menu'},el('summary',{},'☰ Semua Kategori'),el('nav',{class:'w-menu-panel','aria-label':'Kategori'},el('p',{class:'w-category-status',role:'status'},'Memuat kategori…')));
@@ -253,13 +266,19 @@ async function home(signal,container){
   ]);
 }
 function option(value,text,selected){return el('option',{value,selected},text);}
-function field(label,name,input){input.id=`w-filter-${name}`;return el('div',{class:'w-field'},el('label',{for:input.id},label),input);}
-function filterForm(params,cats,categorySlug){
+function field(label,name,input,prefix='w-filter'){input.id=`${prefix}-${name}`;return el('div',{class:'w-field'},el('label',{for:input.id},label),input);}
+function filterForm(params,cats,categorySlug,prefix='w-filter'){
   const input=(name,attrs={})=>el('input',{name,value:params.get(name)||'',...attrs});
   const catOptions=items=>items.flatMap(c=>[option(c.slug,c.name,params.get('category')===c.slug),...catOptions(c.children||[])]);
-  const controls=[field('Jenis','type',el('select',{name:'type'},option('','Produk dan bundle',!params.get('type')),option('product','Produk',params.get('type')==='product'),option('bundle','Bundle',params.get('type')==='bundle')))];
-  if(!categorySlug)controls.push(field('Kategori','category',el('select',{name:'category'},option('','Semua kategori',!params.get('category')),...catOptions(cats))));
-  controls.push(field('Toko','store',input('store',{type:'text',maxlength:255,placeholder:'contoh: toko-utama'})),field('Harga minimum','min_price',input('min_price',{type:'number',min:0,step:'any',inputmode:'decimal'})),field('Harga maksimum','max_price',input('max_price',{type:'number',min:0,step:'any',inputmode:'decimal'})),field('Urutkan','sort',el('select',{name:'sort'},...Object.entries(sorts).map(([value,name])=>option(value,name,params.get('sort')===value)))),field('Per halaman','per_page',el('select',{name:'per_page'},...[15,30,50].map(n=>option(n,n,Number(params.get('per_page'))===n)))));
+  const controls=[field('Jenis','type',el('select',{name:'type'},option('','Produk dan bundle',!params.get('type')),option('product','Produk',params.get('type')==='product'),option('bundle','Bundle',params.get('type')==='bundle')),prefix)];
+  if(!categorySlug)controls.push(field('Kategori','category',el('select',{name:'category'},option('','Semua kategori',!params.get('category')),...catOptions(cats)),prefix));
+  controls.push(
+    field('Toko','store',input('store',{type:'text',maxlength:255,placeholder:'contoh: toko-utama'}),prefix),
+    field('Harga minimum','min_price',input('min_price',{type:'number',min:0,step:'any',inputmode:'decimal'}),prefix),
+    field('Harga maksimum','max_price',input('max_price',{type:'number',min:0,step:'any',inputmode:'decimal'}),prefix),
+    field('Urutkan','sort',el('select',{name:'sort'},...Object.entries(sorts).map(([value,name])=>option(value,name,params.get('sort')===value))),prefix),
+    field('Per halaman','per_page',el('select',{name:'per_page'},...[15,30,50].map(n=>option(n,n,Number(params.get('per_page'))===n))),prefix)
+  );
   const errors=el('div',{class:'w-errors',role:'alert'});
   const resetParams=new URLSearchParams();if(params.get('q'))resetParams.set('q',params.get('q'));
   const form=el('form',{onsubmit:e=>{e.preventDefault();const values=new URLSearchParams(new FormData(form));for(const [k,v] of [...values])if(!v)values.delete(k);if(params.get('q'))values.set('q',params.get('q'));if(categorySlug)values.set('category',categorySlug);const min=values.get('min_price'),max=values.get('max_price');if(min!==null&&max!==null&&Number(max)<Number(min)){const message='Harga maksimum harus lebih besar atau sama dengan harga minimum.';errors.textContent=message;notify({icon:'warning',title:'Rentang harga tidak valid',text:message});return;}errors.textContent='';values.set('page','1');go(location.pathname+'?'+values);}},...controls,errors,el('div',{class:'w-filter-actions'},el('button',{type:'submit',class:'w-button'},'Terapkan'),link(location.pathname+(resetParams.size?'?'+resetParams:''),'Reset')));
@@ -283,7 +302,8 @@ async function listing(signal,container,categorySlug){
   const title=cat?.name||(location.pathname.startsWith('/search')?'Hasil Pencarian':'Semua Produk dan Bundle');document.title=`${title} | Walatra Herbal`;
   container.append(breadcrumb(cat?[[cat.parent?.name,cat.parent?categoryHref(cat.parent):null],[cat.name,null]].filter(x=>x[0]):[[title,null]]),el('h1',{class:'w-heading'},title));
   if(cat){container.append(el('div',{class:'w-category-intro'},categoryIcon(cat,true),cat.description?el('p',{class:'w-description'},cat.description):null));if(cat.children?.length)container.append(section('Subkategori',categoryCards(cat.children)));}
-  const body=el('div',{},state('Memuat hasil katalog…'));container.append(el('div',{class:'w-layout'},filterForm(params,cats,categorySlug),body));
+  const body=el('div',{},state('Memuat hasil katalog…')),desktopFilters=filterForm(params,cats,categorySlug);container.append(el('div',{class:'w-layout'},desktopFilters,body));
+  if((location.pathname.replace(/\/$/,'')||'/')==='/product'||categorySlug)$('.w-mobile-filter-slot')?.replaceChildren(filterForm(params,cats,categorySlug,'w-mobile-filter'));
   try{
     const response=await request('/catalog',params,signal);if(signal.aborted)return;
     if(!Array.isArray(response.data)||!response.meta)throw new ApiError('Struktur pagination katalog tidak valid.');
@@ -673,6 +693,7 @@ async function render({scrollY=0}={}){
   }
   document.body.classList.remove('w-login-page');header.hidden=false;footer.hidden=false;
   if(!shellMounted){mountHeader();mountFooter();shellMounted=true;}
+  syncMobileDrawerMode(path);
   if(path==='/profile/addresses'){await mountAddressesPage(version);return;}
   if(path==='/profile'){await mountProfilePage(version);return;}
   activeController=new AbortController();const {signal}=activeController;
