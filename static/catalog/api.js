@@ -1,5 +1,5 @@
 const base=(globalThis.WALATRA_CONFIG?.apiBaseURL||'http://127.0.0.1:8000/api/v1').replace(/\/$/,'');
-const requestTimeoutMs=globalThis.WALATRA_CONFIG?.catalogTimeoutMs||15000;
+const requestTimeoutMs=globalThis.WALATRA_CONFIG?.apiTimeoutMs||15000;
 export const apiBase=base;
 const pending=new Map();
 let blockedUntil=0;
@@ -22,7 +22,7 @@ function subscribe(entry,signal) {
   });
 }
 export function request(path,params=new URLSearchParams(),signal) {
-  if(!(/^\/catalog(?:\/(?:categories|products|bundles)(?:\/[^/?#]+)?)?$/.test(path)||path==='/banners'))return Promise.reject(new ApiError('Endpoint API tidak valid.'));
+  if(!(/^\/catalog(?:\/(?:categories|products|bundles)(?:\/[^/?#]+)?)?$/.test(path)||path==='/banners'||/^\/shipping\/locations\/(?:provinces|cities|districts|sub-districts)$/.test(path)))return Promise.reject(new ApiError('Endpoint API tidak valid.'));
   if(blockedUntil>Date.now())return Promise.reject(new ApiError('Batas akses tercapai. Tunggu sebelum mencoba lagi.',429,null,blockedUntil));
   const url=new URL(base+path);url.search=new URLSearchParams(params).toString();
   let entry=pending.get(url.href);
@@ -47,3 +47,4 @@ export function request(path,params=new URLSearchParams(),signal) {
 }
 export const categories=signal=>request('/catalog/categories',new URLSearchParams(),signal);
 export const banners=signal=>request('/banners',new URLSearchParams(),signal);
+export const shippingLocations=(level,params=new URLSearchParams(),signal)=>request(`/shipping/locations/${level}`,params,signal);

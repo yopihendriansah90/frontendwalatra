@@ -15,9 +15,9 @@ const queries=fs.existsSync(queryFile)?JSON.parse(fs.readFileSync(queryFile,'utf
 const port=Number(option('--port')||process.env.WEB_PORT||process.env.PORT||5173);
 const host=option('--host')||process.env.WEB_HOST||'127.0.0.1';
 if(!Number.isSafeInteger(port)||port<1||port>65535)throw new Error('WEB_PORT harus berada pada rentang 1–65535.');
-const authBaseURL=httpURL('AUTH_API_BASE_URL','http://127.0.0.1:8001',{originOnly:true});
+const apiBaseURL=httpURL('API_BASE_URL','http://127.0.0.1:8000/api/v1');
 const appOrigin=process.env.APP_ORIGIN?httpURL('APP_ORIGIN',process.env.APP_ORIGIN,{originOnly:true}):null;
-const authSession=createAuthSessionHandler({baseURL:authBaseURL,appOrigin,secureCookies:process.env.COOKIE_SECURE==='true'||(process.env.COOKIE_SECURE!=='false'&&process.env.NODE_ENV==='production'),sessionLifetimeMs:envNumber('SESSION_TTL_SECONDS',43200,{min:60,max:2592000})*1000,upstreamTimeoutMs:envNumber('AUTH_API_TIMEOUT_MS',20000,{min:1000,max:120000})});
+const authSession=createAuthSessionHandler({apiBaseURL,appOrigin,secureCookies:process.env.COOKIE_SECURE==='true'||(process.env.COOKIE_SECURE!=='false'&&process.env.NODE_ENV==='production'),sessionLifetimeMs:envNumber('SESSION_TTL_SECONDS',43200,{min:60,max:2592000})*1000,upstreamTimeoutMs:envNumber('API_REQUEST_TIMEOUT_MS',15000,{min:1000,max:120000})});
 const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2','.ttf':'font/ttf','.mp4':'video/mp4','.pdf':'application/pdf'};
 const server=http.createServer(async(req,res)=>{
   if(await authSession(req,res))return;

@@ -20,3 +20,7 @@ export const verifyOTP=values=>authRequest('/verify-otp',{method:'POST',body:val
 export const currentUser=()=>authRequest('/me');
 export const updateProfile=name=>authRequest('/profile',{method:'PATCH',body:{name}});
 export const logout=()=>authRequest('/logout',{method:'POST',body:{}});
+export const listAddresses=()=>authRequest('/addresses');
+export const createAddress=address=>authRequest('/addresses',{method:'POST',body:address});
+export const updateAddress=(id,changes)=>authRequest(`/addresses/${encodeURIComponent(id)}`,{method:'PATCH',body:changes});
+export const deleteAddress=id=>authRequest(`/addresses/${encodeURIComponent(id)}`,{method:'DELETE'});
