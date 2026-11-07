@@ -26,7 +26,7 @@ function icon(name){
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('aria-hidden','true');
   const path=document.createElementNS(svg.namespaceURI,'path');
-  const shapes={search:'M21 21l-6-6M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z',user:'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z',phone:'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L7.5 9.6a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.6 1.9Z',logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',chevron:'m9 18 6-6-6-6',mail:'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 1 8 6 8-6',pin:'M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0ZM12 10h.01',plus:'M12 5v14M5 12h14',edit:'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z',trash:'M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6',star:'m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z',image:'M3 3h18v18H3zM3 17l6-6 5 5 3-3 4 4M9 7h.01'};
+  const shapes={search:'M21 21l-6-6M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z',user:'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z',home:'m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',bag:'M5 8h14l1 13H4L5 8Zm4 0a3 3 0 0 1 6 0',grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',menu:'M4 6h16M4 12h16M4 18h16',close:'m6 6 12 12M18 6 6 18',phone:'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L7.5 9.6a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.6 1.9Z',logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',chevron:'m9 18 6-6-6-6',mail:'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 1 8 6 8-6',pin:'M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0ZM12 10h.01',plus:'M12 5v14M5 12h14',edit:'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z',trash:'M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6',star:'m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z',image:'M3 3h18v18H3zM3 17l6-6 5 5 3-3 4 4M9 7h.01'};
   path.setAttribute('d',shapes[name]||shapes.image);svg.append(path);return svg;
 }
 function placeholder(){return el('div',{class:'w-no-image',role:'img','aria-label':'Gambar belum tersedia'},icon('image'),el('span',{},'Gambar belum tersedia'));}
@@ -78,10 +78,42 @@ function getCategories(force=false){
 function categoryLinks(items,child=false){
   return items.flatMap(c=>[link(categoryHref(c),[categoryIcon(c,true),el('span',{},c.name)],{class:child?'w-child':null}),...categoryLinks(c.children||[],true)]);
 }
-function closeMenus(){document.querySelectorAll('.w-menu[open]').forEach(m=>m.open=false);const toggle=$('.w-mobile-toggle');if(toggle)toggle.setAttribute('aria-expanded','false');}
+function closeMenus({restoreFocus=false}={}){
+  document.querySelectorAll('.w-menu[open]').forEach(m=>m.open=false);
+  const toggle=$('.w-mobile-toggle'),drawer=$('.w-mobile-drawer');
+  if(toggle)toggle.setAttribute('aria-expanded','false');
+  if(drawer&&!drawer.hidden){drawer.classList.remove('is-open');drawer.setAttribute('aria-hidden','true');drawer.inert=true;document.body.classList.remove('w-drawer-open');if(restoreFocus)toggle?.focus();setTimeout(()=>{if(!drawer.classList.contains('is-open'))drawer.hidden=true;},260);}
+}
+function openMobileDrawer(section='menu'){
+  const drawer=$('.w-mobile-drawer'),toggle=$('.w-mobile-toggle');if(!drawer)return;
+  drawer.hidden=false;drawer.inert=false;drawer.setAttribute('aria-hidden','false');drawer.dataset.section=section;document.body.classList.add('w-drawer-open');toggle?.setAttribute('aria-expanded','true');requestAnimationFrame(()=>{if(!drawer.hidden&&!drawer.inert){drawer.classList.add('is-open');$('.w-mobile-drawer-close',drawer)?.focus();}});
+}
+function mobileNavigation(){
+  const current=location.pathname.replace(/\/$/,'')||'/';
+  const item=(href,label,shape,active)=>link(href,[icon(shape),el('span',{},label)],{class:'w-mobile-nav-item', 'aria-current':active?'page':null});
+  const categories=el('button',{class:'w-mobile-nav-item',type:'button','aria-label':'Buka kategori',onclick:()=>openMobileDrawer('categories')},icon('grid'),el('span',{},'Kategori'));
+  const account=link('/login/','Akun',{class:'w-mobile-nav-item','data-mobile-account-link':''});account.replaceChildren(icon('user'),el('span',{},'Akun'));
+  const nav=el('nav',{class:'w-mobile-bottom-nav','aria-label':'Navigasi utama mobile'},item('/','Beranda','home',current==='/'),item('/product/','Produk','bag',current==='/product'),categories,account);
+  document.body.append(nav);return nav;
+}
+function syncMobileNavigation(path){
+  const nav=$('.w-mobile-bottom-nav');if(!nav)return;
+  const normalized=path.replace(/\/$/,'')||'/';
+  const home=$('a[href="/"]',nav),products=$('a[href="/product/"]',nav),categories=$('button',nav),account=$('[data-mobile-account-link]',nav);
+  for(const [node,active] of [[home,normalized==='/'],[products,normalized==='/product'||normalized==='/search'],[categories,normalized.startsWith('/cat/')],[account,normalized.startsWith('/profile')]]){
+    if(!node)continue;if(active)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');
+  }
+}
+function mountMobileDrawer(toggle){
+  const close=()=>closeMenus({restoreFocus:true});
+  const drawer=el('div',{class:'w-mobile-drawer',hidden:true,'aria-hidden':'true',inert:true},el('button',{class:'w-mobile-drawer-backdrop',type:'button','aria-label':'Tutup menu',onclick:close}),el('nav',{class:'w-mobile-drawer-panel','aria-label':'Menu mobile'},el('div',{class:'w-mobile-drawer-heading'},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('button',{class:'w-mobile-drawer-close w-icon-button',type:'button','aria-label':'Tutup menu',onclick:close},icon('close'))),el('div',{class:'w-mobile-drawer-links'},link('/product/','Semua Produk'),link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('/health-tools/','Cek Kesehatan'),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')),el('section',{class:'w-mobile-drawer-categories','aria-labelledby':'w-mobile-categories-title'},el('h2',{id:'w-mobile-categories-title'},'Kategori'),el('div',{class:'w-mobile-category-links'},el('p',{class:'w-category-status',role:'status'},'Memuat kategori…')))));
+  drawer.hidden=true;drawer.inert=true;drawer.addEventListener('click',event=>{if(event.target.closest('a'))closeMenus();});
+  toggle.addEventListener('click',()=>{if(drawer.hidden)openMobileDrawer('menu');else closeMenus();});
+  header.append(drawer);return drawer;
+}
 function mountHeader(){
   const menu=el('details',{class:'w-menu',id:'w-category-menu'},el('summary',{},'☰ Semua Kategori'),el('nav',{class:'w-menu-panel','aria-label':'Kategori'},el('p',{class:'w-category-status',role:'status'},'Memuat kategori…')));
-  const toggle=el('button',{class:'w-icon-button w-mobile-toggle',type:'button','aria-label':'Buka menu kategori','aria-controls':'w-category-menu','aria-expanded':'false',onclick:()=>{menu.open=!menu.open;toggle.setAttribute('aria-expanded',String(menu.open));}},'☰');
+  const toggle=el('button',{class:'w-icon-button w-mobile-toggle',type:'button','aria-label':'Buka menu','aria-controls':'w-mobile-drawer','aria-expanded':'false'},icon('menu'));
   const searchInput=el('input',{id:'w-search',type:'search',name:'q','aria-label':'Cari produk dan bundle',placeholder:'Temukan produk favoritmu',maxlength:100,autocomplete:'off',value:paramsFromURL(location.href).get('q')||''});
   let timer;
   const search=()=>{clearTimeout(timer);const q=searchInput.value.trim();go('/search/?'+new URLSearchParams(q?{q}:{}));};
@@ -90,14 +122,16 @@ function mountHeader(){
   const form=el('form',{class:'w-search',role:'search',onsubmit:e=>{e.preventDefault();search();}},searchInput,el('button',{type:'submit','aria-label':'Cari'},icon('search')));
   const account=link('/login/?next='+encodeURIComponent(location.pathname+location.search),'Login',{class:'w-button w-login','data-account-link':''});
   header.replaceChildren(el('header',{class:'w-header'},el('div',{class:'w-topbar'},el('div',{class:'w-container'},el('span',{},'Walatra Herbal'),el('nav',{class:'w-toplinks','aria-label':'Tautan informasi'},link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('/product/','Semua Produk')))),el('div',{class:'w-container'},el('div',{class:'w-headrow'},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),link('/health-tools/','Cek Kesehatan',{class:'w-health-link'}),form,account,toggle),el('nav',{class:'w-navrow','aria-label':'Navigasi katalog'},menu,link('/product/','Semua Produk'),el('div',{class:'w-navstrip','aria-label':'Pilihan kategori'})))));
-  currentUser().then(()=>{if(account.isConnected){account.href='/profile/';account.textContent='Profil';}}).catch(error=>{if(error.status!==401)console.warn('Status sesi Walatra tidak dapat diperiksa.');});
+  mountMobileDrawer(toggle);
+  const mobileAccount=$('[data-mobile-account-link]');if(mobileAccount)mobileAccount.href=account.href;
+  currentUser().then(()=>{if(account.isConnected){account.href='/profile/';account.textContent='Profil';if(mobileAccount)mobileAccount.href='/profile/';}}).catch(error=>{if(error.status!==401)console.warn('Status sesi Walatra tidak dapat diperiksa.');});
   menu.addEventListener('toggle',()=>toggle.setAttribute('aria-expanded',String(menu.open)));
   const load=async(force=false)=>{
-    try{const items=await getCategories(force);$('.w-menu-panel',header).replaceChildren(...categoryLinks(items));$('.w-navstrip',header).replaceChildren(...items.map(c=>link(categoryHref(c),el('span',{},c.name))));if(!items.length)$('.w-menu-panel',header).append(el('p',{},'Kategori belum tersedia.'));}
-    catch(e){$('.w-menu-panel',header).replaceChildren(errorState(e,()=>load(true)));$('.w-navstrip',header).replaceChildren(el('span',{class:'w-category-status'},'Kategori belum dapat dimuat.'));}
+    try{const items=await getCategories(force);$('.w-menu-panel',header).replaceChildren(...categoryLinks(items));$('.w-navstrip',header).replaceChildren(...items.map(c=>link(categoryHref(c),el('span',{},c.name))));$('.w-mobile-category-links',header).replaceChildren(...categoryLinks(items));if(!items.length){$('.w-menu-panel',header).append(el('p',{},'Kategori belum tersedia.'));$('.w-mobile-category-links',header).append(el('p',{},'Kategori belum tersedia.'));}}
+    catch(e){$('.w-menu-panel',header).replaceChildren(errorState(e,()=>load(true)));$('.w-navstrip',header).replaceChildren(el('span',{class:'w-category-status'},'Kategori belum dapat dimuat.'));$('.w-mobile-category-links',header).replaceChildren(errorState(e,()=>load(true)));}
   };load();
 }
-function mountFooter(){footer.replaceChildren(el('footer',{class:'w-footer'},el('div',{class:'w-container'},el('div',{},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('small',{},'Produk dan kategori mengikuti katalog Walatra Herbal.')),el('nav',{class:'w-footer-links','aria-label':'Informasi lainnya'},link('/product/','Katalog'),link('/blog/','Artikel'),link('/health-tools/','Cek Kesehatan'),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')))));}
+function mountFooter(){footer.replaceChildren(el('footer',{class:'w-footer'},el('div',{class:'w-container'},el('div',{},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('small',{},'Produk dan kategori mengikuti katalog Walatra Herbal.')),el('nav',{class:'w-footer-links','aria-label':'Informasi lainnya'},link('/product/','Katalog'),link('/blog/','Artikel'),link('/health-tools/','Cek Kesehatan'),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')))));if(!$('.w-mobile-bottom-nav'))mobileNavigation();}
 function errorState(error,retry,titleTag='h2'){
   const notFound=error.status===404;
   const node=el('div',{class:'w-state',role:'alert'},el(titleTag,{},notFound?'Halaman tidak ditemukan':'Data belum dapat dimuat'),el('p',{},error.message||'Silakan coba lagi.'));
@@ -604,7 +638,7 @@ async function render({scrollY=0}={}){
   if(!main||!owned(location.pathname))return;
   activeController?.abort();activeController=null;
   const version=++renderVersion;
-  const path=location.pathname.replace(/\/$/,'')||'/';
+  const path=location.pathname.replace(/\/$/,'')||'/';syncMobileNavigation(path);
   if(path==='/login'){
     main.removeAttribute('aria-busy');document.title='Login | Walatra Herbal';document.body.classList.add('w-login-page');header.hidden=true;footer.hidden=true;mountOTPLogin();return;
   }
@@ -630,7 +664,7 @@ document.addEventListener('click',e=>{
   const a=e.target.closest('a[href]');if(!a||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||a.target==='_blank'||a.hasAttribute('download'))return;
   const u=new URL(a.href,location.href);if(u.origin===location.origin&&owned(u.pathname)&&!a.getAttribute('href').startsWith('#')){e.preventDefault();go(u.href);}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenus();$('.w-mobile-toggle')?.focus();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const drawerOpen=Boolean($('.w-mobile-drawer')&&!$('.w-mobile-drawer').hidden);closeMenus({restoreFocus:drawerOpen});}});
 window.addEventListener('popstate',()=>{if(owned(location.pathname))render({scrollY:history.state?.scrollY||0});else location.reload();});
 const standaloneLogin=/^\/login\/?$/.test(location.pathname);
 if(standaloneLogin){
