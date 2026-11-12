@@ -1,6 +1,6 @@
 # Walatra Herbal, katalog dan akun
 
-Frontend Walatra memakai API untuk katalog produk, bundle, kategori, ikon, banner, login, profil, alamat customer, dan pencarian lokasi pengiriman. Request customer terproteksi melewati bridge Node same-origin. Data katalog tidak disimpan dalam build.
+Frontend Walatra memakai API untuk katalog produk, bundle, kategori, ikon, banner, login, profil, alamat customer, cart, checkout, pesanan, pembayaran, dan pencarian lokasi pengiriman. Request customer terproteksi melewati bridge Node same-origin. Data katalog tidak disimpan dalam build.
 
 ## Jalankan lokal
 
@@ -20,7 +20,15 @@ Beranda, produk, bundle, pencarian, kategori, filter, dan pagination membaca API
 
 Data yang tidak diberikan API—misalnya stok, diskon, rating, atau jumlah terjual—tidak direka. Jika gambar produk kosong atau gagal dimuat, kartu menampilkan “Gambar belum tersedia”. Kategori beranda ditampilkan satu baris dan dapat digeser ke samping. Banner beranda membaca `GET /api/v1/banners`, memetakan `position` `main`, `secondary_top`, dan `secondary_bottom` ke slot tampilannya, serta mengikuti `image_url`, `cta_url`, dan `open_in_new_tab`. Jika API gagal atau belum memiliki banner aktif, gambar snapshot beranda dipakai sementara. Banner API otomatis menjadi prioritas saat tersedia.
 
-Login WhatsApp mendukung request/resend OTP, verifikasi, pelengkapan profil, melihat profil, dan logout. Halaman Alamat Saya mendukung daftar, tambah, ubah, hapus, dan pengaturan alamat utama. Pilihan provinsi sampai kelurahan/desa memakai endpoint lokasi Everpro. Token API hanya berada di memori server; cookie browser berisi ID sesi `HttpOnly`. Alamat belum terhubung ke checkout. Checkout, pembayaran, dan transaksi tetap tidak diaktifkan sebagai backend. Halaman artikel, informasi, lokasi toko, dan alat kesehatan yang sebelumnya tersedia dipertahankan sebagai halaman statis atau UI arsip.
+Login WhatsApp mendukung request/resend OTP, verifikasi, pelengkapan profil, melihat profil, dan logout. Halaman Alamat Saya mendukung daftar, tambah, ubah, hapus, dan pengaturan alamat utama. Pilihan provinsi sampai kelurahan/desa memakai endpoint lokasi Everpro. Token API hanya berada di memori server; cookie browser berisi ID sesi `HttpOnly`. Halaman artikel, informasi, lokasi toko, dan alat kesehatan yang sebelumnya tersedia dipertahankan sebagai halaman statis atau UI arsip.
+
+Cart `/cart/` membaca barang dari API, mengelompokkan per toko, dan menyediakan pilihan per item/toko/semua barang tersedia. Item tidak tersedia dapat dihapus, tetapi tidak dapat dipilih atau diubah quantity-nya. Ringkasan pilihan menggunakan `selection` backend. Checkbox dikelola di halaman; tidak disimpan ke database.
+
+Checkout `/checkout/` menerima `cart_item_ids[]` dari keranjang, memakai alamat tersimpan, dan meminta preview sebelum order baru. Harga/ongkir serta token berasal dari backend. Preview kedaluwarsa setelah 15 menit dan perubahan checkout mengharuskan preview ulang. Permintaan order yang belum pasti disimpan di `sessionStorage` per akun agar reload/retry memakai key dan payload yang sama; penyimpanan ini berisi ID item, ID alamat, token preview, dan key retry, tanpa Bearer token.
+
+Pesanan `/orders/` dan `/orders/:id/` menampilkan snapshot, status, pembatalan, serta pembayaran sesuai provider backend. Midtrans memakai instruksi VA, Mandiri Bill, atau QRIS melalui Core API. Gambar QRIS diambil melalui bridge berautentikasi dan ditampilkan sebagai blob. Key pembayaran disimpan terpisah per akun/order untuk pemulihan timeout dan `202 PAYMENT_PROCESSING`. Mengganti metode yang sudah terkonfirmasi memakai key baru. Halaman order membaca status tersimpan setiap 15 detik saat tab terlihat; tombol sinkronisasi memanggil provider dan dapat memulihkan charge sesuai kontrak backend. Status akhir selalu mengikuti backend. Mode manual menampilkan instruksi admin dan simulasi diberi label.
+
+Deployment membutuhkan server Node untuk `/auth/session/*`, bukan hosting statis saja. Sesi saat ini disimpan di memori proses; restart server memerlukan login ulang. Lingkungan pembayaran, metode aktif, stok, ongkir, worker, dan webhook mengikuti konfigurasi backend. Implementasi frontend tidak membuktikan settlement pembayaran nyata.
 
 ## Pemeriksaan
 
@@ -31,3 +39,5 @@ npm run test:browser
 ```
 
 Audit browser memerlukan Python Playwright/Chromium dan API lokal yang berjalan. Contoh untuk alamat lain: `CATALOG_TEST_API=http://127.0.0.1:8000/api/v1 CATALOG_TEST_URL=http://127.0.0.1:5173 npm run test:browser`.
+
+Tes commerce terisolasi: jalankan `npm run build`, mulai frontend dengan `node scripts/serve-local.mjs --port 5199`, lalu `python3 tests/commerce-browser.py`. Tes ini mengganti respons API di browser, tanpa menulis ke akun customer atau membuat charge provider. Bukti visual dan hasil disimpan di `/tmp/walatra-commerce-evidence`.

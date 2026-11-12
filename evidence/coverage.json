@@ -11847,7 +11847,11 @@
     "/cat/:slug/",
     "/search/",
     "/login/",
-    "/profile/"
+    "/profile/",
+    "/cart/",
+    "/checkout/",
+    "/orders/",
+    "/orders/:id/"
   ],
   "static_data_snapshots": 2,
   "legacy_catalog_removed": true

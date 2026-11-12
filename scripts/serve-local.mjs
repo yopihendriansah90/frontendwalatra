@@ -30,7 +30,7 @@ const server=http.createServer(async(req,res)=>{
     if(relative.startsWith('..')||path.isAbsolute(relative)){res.writeHead(403);res.end();return;}
     const params=new URLSearchParams(url.searchParams);params.sort();
     const queryKey=(url.pathname.replace(/\/$/,'')||'/')+(params.size?'?'+params:'');
-    if(pathname==='/'||/^\/(product|bundle|cat|search|login|profile)(\/|$)/.test(pathname))file=path.join(root,'catalog/index.html');
+    if(pathname==='/'||/^\/(product|bundle|cat|search|login|profile|cart|checkout|orders)(\/|$)/.test(pathname))file=path.join(root,'catalog/index.html');
     else if(queries[queryKey])file=path.join(root,queries[queryKey]);
     let info=await stat(file);
     if(info.isDirectory()){

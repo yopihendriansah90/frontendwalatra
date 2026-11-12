@@ -23,13 +23,19 @@ async function readJSON(req){
 
 export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookies=false,sessionLifetimeMs=12*60*60*1000,upstreamTimeoutMs=20000}){
   const sessions=new Map();
-  const requestAPI=async(path,{method='GET',body,token}={})=>{
+  const requestAPI=async(path,{method='GET',body,token,key,binary=false}={})=>{
     const headers={Accept:'application/json'};
     if(body!==undefined)headers['Content-Type']='application/json';
     if(token)headers.Authorization=`Bearer ${token}`;
+    if(key!==undefined)headers['Idempotency-Key']=key;
+    if(binary)headers.Accept='image/png';
     let response;
     try{response=await fetch(`${apiBaseURL}${path}`,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(upstreamTimeoutMs)});}
     catch(error){throw Object.assign(new Error(error.name==='TimeoutError'?'Layanan autentikasi terlalu lama merespons.':'Tidak dapat menghubungi layanan autentikasi.'),{status:502});}
+    if(binary&&response.ok){
+      if(!response.headers.get('Content-Type')?.startsWith('image/png'))throw Object.assign(new Error('Format gambar QR tidak valid.'),{status:502});
+      return {status:response.status,image:Buffer.from(await response.arrayBuffer())};
+    }
     let data;
     try{data=await response.json();}catch{throw Object.assign(new Error('Respons layanan autentikasi tidak dapat dibaca.'),{status:502});}
     return {status:response.status,data,retryAfter:response.headers.get('Retry-After')};
@@ -125,6 +131,50 @@ export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookie
         const result=await requestAPI(`/addresses/${addressMatch[1]}`,{method:req.method,body,token:found.session.token});
         if(result.status===401)clearSession(res,found.id);
         sendAPI(res,result);return true;
+      }
+      if(route==='/cart'&&['GET','DELETE'].includes(req.method)){
+        const found=currentSession(req,res);
+        if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
+        const query=new URLSearchParams();
+        if(req.method==='GET')for(const value of url.searchParams.getAll('cart_item_ids[]'))query.append('cart_item_ids[]',value);
+        const result=await requestAPI('/cart'+(query.size?'?'+query:''),{method:req.method,token:found.session.token});
+        if(result.status===401)clearSession(res,found.id);
+        sendAPI(res,result);return true;
+      }
+      if(route==='/cart/items'&&req.method==='POST'){
+        const found=currentSession(req,res);
+        if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
+        const body=await readJSON(req),result=await requestAPI('/cart/items',{method:'POST',body,token:found.session.token});
+        if(result.status===401)clearSession(res,found.id);
+        sendAPI(res,result);return true;
+      }
+      const cartItemMatch=route.match(/^\/cart\/items\/(\d+)$/);
+      if(cartItemMatch&&['PATCH','DELETE'].includes(req.method)){
+        const found=currentSession(req,res);
+        if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
+        const body=req.method==='PATCH'?await readJSON(req):undefined;
+        const result=await requestAPI(`/cart/items/${cartItemMatch[1]}`,{method:req.method,body,token:found.session.token});
+        if(result.status===401)clearSession(res,found.id);
+        sendAPI(res,result);return true;
+      }
+      const commerceRoute=(route==='/checkout/preview'&&req.method==='POST')
+        ||(route==='/orders'&&['GET','POST'].includes(req.method))
+        ||(route==='/payment-methods'&&req.method==='GET')
+        ||(/^\/orders\/\d+$/.test(route)&&req.method==='GET')
+        ||(/^\/orders\/\d+\/(cancel|payment\/refresh)$/.test(route)&&req.method==='POST')
+        ||(/^\/orders\/\d+\/payment$/.test(route)&&['GET','POST'].includes(req.method))
+        ||(/^\/orders\/\d+\/payments\/\d+\/qr-code$/.test(route)&&req.method==='GET');
+      if(commerceRoute){
+        const found=currentSession(req,res);
+        if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
+        const query=new URLSearchParams();if(route==='/orders'&&req.method==='GET'&&url.searchParams.has('page'))query.set('page',url.searchParams.get('page'));
+        const body=req.method==='POST'?await readJSON(req):undefined;
+        const binary=route.endsWith('/qr-code');
+        const result=await requestAPI(route+(query.size?'?'+query:''),{method:req.method,body,token:found.session.token,key:req.headers['idempotency-key'],binary});
+        if(result.status===401)clearSession(res,found.id);
+        if(result.image){res.writeHead(result.status,{'Content-Type':'image/png','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(result.image);}
+        else sendAPI(res,result);
+        return true;
       }
       if(route==='/logout'&&req.method==='POST'){
         const found=currentSession(req,res);

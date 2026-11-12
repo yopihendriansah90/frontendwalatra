@@ -18,7 +18,8 @@
     const button=e.target.closest('button');if(button&&/^(login(?: with google)?|masuk|daftar|register|subscribe|kirim|bayar|checkout|reset password)$/i.test(button.textContent.trim())){const form=button.closest('form');if(form&&!form.reportValidity())return;e.preventDefault();e.stopImmediatePropagation();notice();return;}
     const a=e.target.closest('a[href]');if(!a||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||a.target==='_blank')return;
     const u=new URL(a.href,location.href);if(u.origin!==location.origin)return;
-    if(/^\/(checkout|member)(\/|$)/.test(u.pathname)){e.preventDefault();e.stopImmediatePropagation();notice();}
+    if(/^\/(checkout|cart|orders)(\/|$)/.test(u.pathname)){e.preventDefault();e.stopImmediatePropagation();location.assign(u.href);}
+    else if(/^\/member(\/|$)/.test(u.pathname)){e.preventDefault();e.stopImmediatePropagation();notice();}
     else if(!/^\/(product|bundle|cat|search)(\/|$)/.test(u.pathname)&&u.pathname!=='/'&&!a.getAttribute('href').startsWith('#')){e.preventDefault();e.stopImmediatePropagation();location.assign(u.href);}
   },true);
 })();
