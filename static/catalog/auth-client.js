@@ -34,6 +34,7 @@ export const previewCheckout=body=>authRequest('/checkout/preview',{method:'POST
 export const createOrder=(body,key)=>authRequest('/orders',{method:'POST',body,key});
 export const listOrders=(page=1)=>authRequest(`/orders?page=${page}`);
 export const getOrder=id=>authRequest(`/orders/${encodeURIComponent(id)}`);
+export const getOrderPayment=id=>authRequest(`/orders/${encodeURIComponent(id)}/payment`);
 export const cancelOrder=id=>authRequest(`/orders/${encodeURIComponent(id)}/cancel`,{method:'POST',body:{}});
 export const paymentMethods=()=>authRequest('/payment-methods');
 export const createPayment=(id,method,key)=>authRequest(`/orders/${encodeURIComponent(id)}/payment`,{method:'POST',body:{method},key});

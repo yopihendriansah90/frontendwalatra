@@ -1,6 +1,7 @@
 const base=(globalThis.WALATRA_CONFIG?.apiBaseURL||'http://127.0.0.1:8000/api/v1').replace(/\/$/,'');
 const requestTimeoutMs=globalThis.WALATRA_CONFIG?.apiTimeoutMs||15000;
 export const apiBase=base;
+export const apiMediaBase=globalThis.WALATRA_CONFIG?.apiMediaBaseURL||new URL(base).origin;
 const pending=new Map();
 let blockedUntil=0;
 export class ApiError extends Error {

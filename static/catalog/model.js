@@ -20,8 +20,14 @@ export function mediaURL(value,base) {
   if (!value || typeof value !== 'string') return null;
   try { const u=new URL(value,new URL(base).origin);return ['http:','https:'].includes(u.protocol)?u.href:null; } catch { return null; }
 }
-export function imageURLs(image,base,card=false) {
-  return [...new Set((card ? [image?.thumb,image?.url,image?.image_url] : [image?.full,image?.preview,image?.url,image?.thumb]).map(v=>mediaURL(v,base)).filter(Boolean))];
+export function mediaAssetURL(value,base,mediaBase=new URL(base).origin) {
+  const resolved=mediaURL(value,base);if(!resolved)return null;
+  try{const url=new URL(resolved);
+    return url.pathname.startsWith('/storage/')?new URL(url.pathname+url.search+url.hash,new URL(mediaBase).origin).href:url.href;
+  }catch{return null;}
+}
+export function imageURLs(image,base,card=false,mediaBase=new URL(base).origin) {
+  return [...new Set((card ? [image?.thumb,image?.url,image?.image_url] : [image?.full,image?.preview,image?.url,image?.thumb]).map(v=>mediaAssetURL(v,base,mediaBase)).filter(Boolean))];
 }
 export function paramsFromURL(url) {
   const input=new URL(url,'http://localhost'),p=new URLSearchParams();

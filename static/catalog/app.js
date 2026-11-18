@@ -1,8 +1,10 @@
 import Swal from './vendor/sweetalert2.esm.all.min.js';
-import {request,categories,banners,shippingLocations,apiBase,ApiError} from './api.js';
+import {request,categories,banners,shippingLocations,apiBase,apiMediaBase,ApiError} from './api.js';
 import {AuthError,requestOTP,verifyOTP,currentUser,updateProfile,logout,listAddresses,createAddress,updateAddress,deleteAddress,getCart,addCartItem} from './auth-client.js';
-import {sorts,money,itemPrice,itemKey,detailURL,mediaURL,imageURLs,paramsFromURL,selection} from './model.js';
+import {sorts,money,itemPrice,itemKey,detailURL,mediaURL,mediaAssetURL,imageURLs,paramsFromURL,selection} from './model.js';
 import {commerce} from './commerce.js';
+import {createNotifications} from './notifications.js';
+import {addressMap} from './address-map.js';
 
 const $=(s,r=document)=>r.querySelector(s);
 globalThis.Swal=Swal;
@@ -18,11 +20,21 @@ function el(tag,attrs={},...children){
   for(const child of children.flat(Infinity))if(child!==null&&child!==undefined)node.append(child instanceof Node?child:document.createTextNode(String(child)));
   return node;
 }
-function notify(options){
-  if(!globalThis.Swal)return Promise.resolve(null);
-  if(Swal.isVisible())return Promise.resolve(null);
-  return Swal.fire({confirmButtonColor:'#075446',customClass:{popup:'w-swal-popup',confirmButton:'w-swal-confirm'},...options});
-}
+const notify=createNotifications(Swal);
+let invalidField=null;
+document.addEventListener('invalid',event=>{
+  event.preventDefault();
+  if(invalidField)return;
+  invalidField=event.target;
+  queueMicrotask(async()=>{
+    const field=invalidField;
+    try{
+      const label=field.labels?.[0]?.textContent.trim()||field.getAttribute('aria-label');
+      await notify({icon:'warning',title:'Periksa isian formulir',text:[label,field.validationMessage].filter(Boolean).join(': '),returnFocus:false});
+      if(field.isConnected)field.focus();
+    }finally{invalidField=null;}
+  });
+},true);
 function icon(name){
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('aria-hidden','true');
@@ -55,7 +67,7 @@ function renderDescription(markup){
     const tag=node.tagName.toLowerCase();
     if(['script','style','iframe','object','embed','template','noscript'].includes(tag))return null;
     if(tag==='img'){
-      const src=mediaURL(node.getAttribute('src'),apiBase);if(!src)return null;
+      const src=mediaAssetURL(node.getAttribute('src'),apiBase,apiMediaBase);if(!src)return null;
       const image=el('img',{src,alt:node.getAttribute('alt')||'',loading:'lazy',decoding:'async'});image.addEventListener('error',()=>image.remove(),{once:true});return image;
     }
     if(!allowed.has(tag)){const fragment=document.createDocumentFragment();for(const child of node.childNodes){const safe=convert(child);if(safe)fragment.append(safe);}return fragment;}
@@ -70,7 +82,7 @@ function renderDescription(markup){
   const content=document.createDocumentFragment();for(const child of parsed.body.childNodes){const safe=convert(child);if(safe)content.append(safe);}
   return el('div',{class:'w-description'},content);
 }
-const categoryIcon=(c,eager=false)=>picture([mediaURL(c.icon_url,apiBase)].filter(Boolean),c.name,{category:true,eager});
+const categoryIcon=(c,eager=false)=>picture([mediaAssetURL(c.icon_url,apiBase,apiMediaBase)].filter(Boolean),c.name,{category:true,eager});
 const categoryHref=c=>`/cat/${encodeURIComponent(c.slug)}/`;
 const logo=()=>el('img',{class:'w-logo',src:'/_media/cdn/images/logo_naturalfarm.svg',alt:'Walatra Herbal',width:140,height:32});
 const link=(href,label,attrs={})=>el('a',{href,...attrs},label);
@@ -78,7 +90,7 @@ let categoryData=null,categoryPromise=null,activeController=null,renderVersion=0
 let main=$('#site-main'),header=$('#site-header'),footer=$('#site-footer');
 let shellMounted=false;
 let cartData=null,cartLoadPromise=null;
-const shop=commerce({el,link,money,main,go,setCartData,cartImage,confirm:async(title,text)=>Boolean((await Swal.fire({title,text,icon:'warning',showCancelButton:true,confirmButtonText:'Ya, lanjutkan',cancelButtonText:'Batal',confirmButtonColor:'#075446'})).isConfirmed)});
+const shop=commerce({el,link,money,main,go,setCartData,cartImage,notify,confirm:async(title,text)=>Boolean((await notify({title,text,icon:'warning',showCancelButton:true,confirmButtonText:'Ya, lanjutkan'})).isConfirmed)});
 if(!header){header=el('div',{id:'site-header'});document.body.prepend(header);}
 if(!footer){footer=el('div',{id:'site-footer'});document.body.append(footer);}
 document.body.classList.add('w-site');
@@ -178,30 +190,24 @@ function section(title,body,more){return el('section',{class:'w-section'},el('di
 function breadcrumb(parts){return el('nav',{class:'w-breadcrumb','aria-label':'Breadcrumb'},link('/','Beranda'),...parts.flatMap(([text,href])=>['/',href?link(href,text):el('span',{'aria-current':'page'},text)]));}
 function categoryCards(items,scroll=false){return el('div',{class:`w-category-grid${scroll?' w-category-carousel':''}`,tabindex:scroll?'0':null,'aria-label':scroll?'Daftar kategori, geser ke samping':null},...items.map(c=>link(categoryHref(c),[categoryIcon(c),el('span',{},c.name),Number.isFinite(c.product_count)?el('span',{class:'w-category-count'},`${c.product_count} produk`):null],{class:'w-category-card'})));}
 function card(item){
-  const urls=imageURLs({...item.image,image_url:item.image_url},apiBase,true);
+  const urls=imageURLs({...item.image,image_url:item.image_url},apiBase,true,apiMediaBase);
   return el('article',{class:'w-product-card','data-item-key':itemKey(item)},link(detailURL(item),[el('div',{class:'w-card-media'},picture(urls,item.name)),el('div',{class:'w-card-body'},el('span',{class:'w-item-type'},item.type==='bundle'?'Bundle':'Produk'),el('h3',{class:'w-product-name'},item.name),el('div',{class:'w-price'},itemPrice(item)))],{class:'w-card-link'}),item.store?link('/product/?'+new URLSearchParams({store:item.store.slug}),el('span',{},item.store.name),{class:'w-store-name',style:'padding:0 12px 12px'}):null);
 }
 function grid(items,list=false){return items.length?el('div',{class:`w-grid${list?' w-list-grid':''}`},...items.map(card)):state('Belum ada produk atau bundle yang sesuai. Ubah pencarian atau filter.');}
 function bannerImage(item,eager=false){
-  const src=mediaURL(item.image_url,apiBase);
+  const src=mediaAssetURL(item.image_url,apiBase,apiMediaBase);
   const image=el('img',{class:'w-banner-image',src,alt:item.name||'Banner Walatra Herbal',loading:eager?'eager':'lazy',fetchpriority:eager?'high':null,decoding:'async'});
   image.addEventListener('error',()=>image.closest('.w-banner-card')?.remove(),{once:true});
   const href=mediaURL(item.cta_url,apiBase);
   return href?link(href,image,{class:'w-banner-card',target:item.open_in_new_tab===true?'_blank':null,rel:item.open_in_new_tab===true?'noopener noreferrer':null,'aria-label':item.name||'Lihat promo'}):el('div',{class:'w-banner-card'},image);
 }
-function archivedBanner(item,eager=false){
-  return el('img',{class:'w-banner-image',src:item.src,alt:item.alt||'Banner arsip',width:item.width,height:item.height,loading:eager?'eager':'lazy',fetchpriority:eager?'high':null,decoding:'async'});
-}
 async function archivedHomeBanners(target,signal){
   try{
     const response=await fetch('/banners/manifest.json',{signal});if(!response.ok)throw new Error('Banner arsip belum tersedia');const data=await response.json();if(signal.aborted)return;
-    const hero=data.hero||[];if(!hero.length){target.remove();return;}
-    let current=0;const image=archivedBanner(hero[0],true),dots=el('div',{class:'w-banner-dots','aria-label':'Pilih banner'});
-    const show=index=>{current=(index+hero.length)%hero.length;const item=hero[current];image.src=item.src;image.alt=item.alt;image.width=item.width;image.height=item.height;dots.querySelectorAll('button').forEach((button,i)=>button.setAttribute('aria-pressed',String(i===current)));};
-    const frame=el('div',{class:'w-banner-hero',role:'region','aria-label':'Banner beranda',onkeydown:e=>{if(e.key==='ArrowRight'){e.preventDefault();show(current+1,1);}if(e.key==='ArrowLeft'){e.preventDefault();show(current-1,-1);}}},image);
-    if(hero.length>1){frame.append(el('button',{type:'button',class:'w-banner-arrow w-banner-prev','aria-label':'Banner sebelumnya',onclick:()=>show(current-1,-1)},'‹'),el('button',{type:'button',class:'w-banner-arrow w-banner-next','aria-label':'Banner berikutnya',onclick:()=>show(current+1,1)},'›'));hero.forEach((_,i)=>dots.append(el('button',{type:'button',class:'w-banner-dot','aria-label':`Banner ${i+1}`,'aria-pressed':String(i===0),onclick:()=>{const forward=(i-current+items.length)%items.length;show(i,forward<=items.length/2?1:-1);}},el('span',{'aria-hidden':'true'}))));frame.append(dots);}
-    target.replaceChildren(el('div',{class:'w-banner-layout'},frame,el('div',{class:'w-banner-side'},...(data.side||[]).slice(0,2).map(item=>archivedBanner(item)))),...(data.strip||[]).map(item=>el('div',{class:'w-banner-strip'},archivedBanner(item))),el('small',{class:'w-banner-note'},'Materi promosi arsip sementara.'));
-    const extra=$('[data-extra-banners]');if(extra)extra.replaceChildren(el('div',{class:'w-banner-mini'},...[...(data.mini||[]),...(data.bottom||[])].map(item=>archivedBanner(item))));
+    const archivedItems=[...(data.hero||[]),...(data.side||[]),...(data.strip||[])].map(item=>({...item,image_url:new URL(item.src,location.origin).href,name:item.alt,cta_url:null}));
+    if(!archivedItems.length){target.remove();return;}
+    const carousel=bannerCarousel(archivedItems,'w-banner-hero','Banner beranda',5000);
+    target.replaceChildren(el('div',{class:'w-banner-layout'},carousel),el('small',{class:'w-banner-note'},'Materi promosi arsip sementara.'));
   }catch(e){if(!signal.aborted)target.remove();}
 }
 function bannerCarousel(items,className,label,autoAdvanceMs=0){
@@ -259,21 +265,16 @@ async function homeBanners(target,signal){
   try{response=await banners(signal);}catch(e){if(signal.aborted)return;await archivedHomeBanners(target,signal);return;}
   if(signal.aborted)return;
   if(!Array.isArray(response.data)){await archivedHomeBanners(target,signal);return;}
-  const items=response.data.filter(item=>mediaURL(item.image_url,apiBase)&&['main','secondary_top','secondary_bottom'].includes(item.position));
+  const items=response.data.filter(item=>mediaAssetURL(item.image_url,apiBase,apiMediaBase)&&['main','secondary_top','secondary_bottom'].includes(item.position));
   if(!items.length){await archivedHomeBanners(target,signal);return;}
-  const byPosition=position=>items.filter(item=>item.position===position);
-  const mainItems=byPosition('main'),topItems=byPosition('secondary_top'),bottomItems=byPosition('secondary_bottom');
-  const hero=bannerCarousel(mainItems,'w-banner-hero','Banner utama',3000);
-  const top=bannerCarousel(topItems,'w-banner-secondary w-banner-secondary-top','Banner kanan atas',7000);
-  const bottom=bannerCarousel(bottomItems,'w-banner-secondary w-banner-secondary-bottom','Banner kanan bawah',7000);
-  const side=el('div',{class:'w-banner-side'},top,bottom);
-  target.replaceChildren(el('div',{class:'w-banner-layout'},hero,side));
+  const carousel=bannerCarousel(items,'w-banner-hero','Banner beranda',5000);
+  target.replaceChildren(el('div',{class:'w-banner-layout'},carousel));
 }
 async function home(signal,container){
   document.title='Walatra Herbal | Produk dan Bundle';
   const banners=el('section',{class:'w-home-banners','aria-label':'Banner beranda'});
   container.append(el('h1',{class:'w-sr-only'},'Produk Herbal Walatra'),banners);
-  const cats=state('Memuat kategori…'),latest=state('Memuat produk terbaru…');container.append(section('Belanja Sesuai Kategori',cats),section('Produk Terbaru',latest,'/product/'));
+  const cats=state('Memuat kategori…'),latest=state('Memuat produk terbaru…');container.append(section('Belanja Sesuai Kategori',cats,'/product/'),section('Produk Terbaru',latest,'/product/'));
   await Promise.allSettled([
     homeBanners(banners,signal),
     getCategories().then(items=>{if(!signal.aborted)cats.replaceWith(items.length?categoryCards(items,true):state('Kategori belum tersedia.'));}).catch(e=>{if(!signal.aborted)cats.replaceWith(errorState(e,()=>render()));}),
@@ -328,13 +329,13 @@ async function listing(signal,container,categorySlug){
 function gallery(images,name,variants=[],selectedVariant=null){
   const entries=[...images].sort((a,b)=>(a.order??0)-(b.order??0)).map((image,i)=>({image,label:`Foto etalase${images.length>1?` ${i+1}`:''}`}));
   for(const variant of variants)if(variant.image_url)entries.push({image:{url:variant.image_url,image_url:variant.image_url},variantId:String(variant.id),label:variant.name||'Foto varian'});
-  const seen=new Set(),list=entries.map(entry=>({...entry,urls:imageURLs(entry.image,apiBase)})).filter(entry=>{
+  const seen=new Set(),list=entries.map(entry=>({...entry,urls:imageURLs(entry.image,apiBase,false,apiMediaBase)})).filter(entry=>{
     if(!entry.urls.length)return false;const key=entry.urls.at(-1);if(seen.has(key))return false;seen.add(key);return true;
   });
   const selectedIndex=list.findIndex(entry=>entry.variantId===String(selectedVariant?.id));
   let active=selectedIndex>=0?selectedIndex:0;
   const area=el('div',{class:'w-gallery-main'},list.length?picture(list[active].urls,`${name} — ${list[active].label}`,{eager:true}):placeholder());
-  const originalURL=image=>mediaURL(image.url||image.image_url||image.full||image.preview||image.thumb,apiBase);
+  const originalURL=image=>mediaAssetURL(image.url||image.image_url||image.full||image.preview||image.thumb,apiBase,apiMediaBase);
   if(list.length){const link=el('a',{class:'w-gallery-main-link',href:originalURL(list[active].image)||list[active].urls[0],target:'_blank',rel:'noopener noreferrer','aria-label':'Buka gambar asli produk di tab baru'},area.firstChild);area.replaceChildren(link);}
   const thumbs=el('div',{class:'w-thumbnails','aria-label':'Galeri produk'});
   const show=index=>{if(!list.length)return;active=index;const link=area.querySelector('.w-gallery-main-link');if(link){link.href=originalURL(list[index].image)||list[index].urls[0];link.replaceChildren(picture(list[index].urls,`${name} — ${list[index].label}`,{eager:true}));}else area.replaceChildren(picture(list[index].urls,`${name} — ${list[index].label}`,{eager:true}));thumbs.querySelectorAll('button').forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));};
@@ -367,7 +368,7 @@ function gallery(images,name,variants=[],selectedVariant=null){
     update(startIndex);document.body.append(viewer);document.body.classList.add('w-product-viewer-open');document.addEventListener('keydown',onKeyDown);close.focus();
   };
   area.addEventListener('click',event=>{event.preventDefault();openViewer(active);});
-  list.forEach((entry,i)=>{const button=el('button',{type:'button','aria-label':`Lihat foto ${entry.label}`,'aria-pressed':i===active,onclick:()=>show(i)},picture(imageURLs(entry.image,apiBase,true),entry.label),el('span',{class:'w-thumb-label'},entry.label));thumbs.append(button);});
+  list.forEach((entry,i)=>{const button=el('button',{type:'button','aria-label':`Lihat foto ${entry.label}`,'aria-pressed':String(i===active),onclick:()=>show(i)},picture(imageURLs(entry.image,apiBase,true,apiMediaBase),entry.label),el('span',{class:'w-thumb-label'},entry.label));thumbs.append(button);});
   const root=el('div',{class:'w-gallery'},area,list.length>1?thumbs:null);
   root.showVariant=id=>{const variantIndex=list.findIndex(entry=>entry.variantId===String(id));const fallbackIndex=list.findIndex(entry=>!entry.variantId);if(variantIndex>=0)show(variantIndex);else if(fallbackIndex>=0)show(fallbackIndex);};
   return root;
@@ -375,7 +376,7 @@ function gallery(images,name,variants=[],selectedVariant=null){
 function variantPicker(variants,selected,onSelect){
   let selectedId=String(selected?.id??'');const buttons=[];
   const options=variants.map(variant=>{
-    const imageURL=mediaURL(variant.image_url,apiBase);
+    const imageURL=mediaAssetURL(variant.image_url,apiBase,apiMediaBase);
     const children=[];
     if(imageURL){const image=el('img',{class:'w-variant-photo',src:imageURL,alt:'',loading:'lazy',decoding:'async'});image.addEventListener('error',()=>image.remove(),{once:true});children.push(image);}
     const button=el('button',{type:'button',class:'w-variant-badge','data-variant-id':variant.id,'aria-pressed':String(String(variant.id)===selectedId),onclick:()=>{if(String(variant.id)===selectedId)return;selectedId=String(variant.id);buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));onSelect(variant);}},...children,el('span',{class:'w-variant-name'},variant.name));buttons.push(button);return button;
@@ -520,7 +521,7 @@ function mountOTPLogin(){
     }},'Kirim ulang kode');
     const change=el('button',{class:'w-login-secondary-button',type:'button',onclick:()=>{sessionStorage.removeItem(challengeStorageKey);showPhone(challenge.phone);}},'Ganti nomor WhatsApp');
     const form=el('form',{class:'w-login-otp-form',onsubmit:async event=>{
-      event.preventDefault();if(expired()){otpStatus.textContent='Kode sudah kedaluwarsa. Minta kode baru untuk melanjutkan.';verify.disabled=true;return;}
+      event.preventDefault();if(expired()){otpStatus.textContent='Kode sudah kedaluwarsa. Minta kode baru untuk melanjutkan.';notify({icon:'warning',title:'Kode sudah kedaluwarsa',text:otpStatus.textContent});verify.disabled=true;return;}
       if(otp.value.length!==6)return;verify.disabled=true;verify.textContent='Memverifikasi…';
       try{
         const result=await verifyOTP({phone:challenge.phone,challenge_id:Number(challenge.challenge_id),otp:otp.value,device_name:'Walatra Herbal Web'});
@@ -543,7 +544,7 @@ function safeNext(value){
   try{const url=new URL(value,location.origin);return url.origin===location.origin&&!['/login','/profile'].includes(url.pathname.replace(/\/$/,''))?url.pathname+url.search+url.hash:null;}catch{return null;}
 }
 function cartImage(url,name){
-  const source=mediaURL(url,apiBase);
+  const source=mediaAssetURL(url,apiBase,apiMediaBase);
   if(!source)return el('div',{class:'w-cart-image'},placeholder());
   const img=el('img',{src:source,alt:name||'Gambar produk',loading:'lazy',decoding:'async'});
   img.addEventListener('error',()=>img.replaceWith(placeholder()),{once:true});
@@ -638,11 +639,12 @@ async function mountAddressesPage(version=++renderVersion){
     };
     const setDefault=address=>mutate(()=>updateAddress(address.id,{is_default:true}),'Alamat utama diperbarui','Alamat utama berhasil diperbarui.');
     const removeAddress=async address=>{
-      const result=await Swal.fire({icon:'warning',title:'Hapus alamat ini?',text:`${address.label||'Alamat'} atas nama ${address.name||'penerima'} akan dihapus.`,showCancelButton:true,confirmButtonText:'Hapus alamat',cancelButtonText:'Batal',confirmButtonColor:'#a33b34',cancelButtonColor:'#64756a',customClass:{popup:'w-swal-popup',confirmButton:'w-swal-confirm'}});
+      const result=await notify({icon:'warning',title:'Hapus alamat ini?',text:`${address.label||'Alamat'} atas nama ${address.name||'penerima'} akan dihapus.`,showCancelButton:true,confirmButtonText:'Hapus alamat'});
       if(!result.isConfirmed)return;
       await mutate(()=>deleteAddress(address.id),'Alamat dihapus','Alamat berhasil dihapus.');
     };
     const openAddressForm=async existing=>{
+      const pointPicker=addressMap({el,notify,initial:existing,isActive:()=>version===renderVersion});
       const formNotice=el('p',{class:'w-address-form-notice',role:'status','aria-live':'polite'});
       const addressLabel=el('input',{id:'w-address-label',name:'label',type:'text',maxlength:50,required:true,value:existing?.label||''});
       const recipient=el('input',{id:'w-address-name',name:'name',type:'text',autocomplete:'name',minlength:2,maxlength:255,required:true,value:existing?.name||user.name||''});
@@ -663,8 +665,10 @@ async function mountAddressesPage(version=++renderVersion){
       const form=el('form',{class:'w-address-form',onsubmit:async event=>{
         event.preventDefault();if(!form.reportValidity())return;
         const provinceOption=province.selectedOptions[0],cityOption=city.selectedOptions[0],districtOption=district.selectedOptions[0],subOption=subDistrict.selectedOptions[0];
-        if(!province.value||!city.value||!district.value||!subDistrict.value){formNotice.textContent='Pilih provinsi, kota, kecamatan, dan kelurahan/desa.';return;}
+        if(!province.value||!city.value||!district.value||!subDistrict.value){notify({icon:'warning',title:'Wilayah belum lengkap',text:'Pilih provinsi, kota, kecamatan, dan kelurahan/desa.'});return;}
+        let point;try{point=pointPicker.value();}catch(error){authNotice(error,'Titik pengiriman belum valid');return;}
         const body={label:addressLabel.value.trim(),name:recipient.value.trim(),phone:phone.value.trim(),province:provinceOption.textContent,province_id:province.value,province_name:provinceOption.textContent,city:cityOption.textContent,city_id:city.value,city_name:cityOption.textContent,district:districtOption.textContent,district_id:district.value,district_name:districtOption.textContent,sub_district_id:subDistrict.value,sub_district_name:subOption.textContent,postal_code:postalCode.value.trim(),address:street.value.trim(),address_note:note.value.trim()||null};
+        body.latitude=point?.lat??null;body.longitude=point?.lon??null;
         if(!existing&&!addresses.length)body.is_default=true;else if(isDefault.checked&&!existing?.is_default)body.is_default=true;
         save.disabled=true;save.textContent='Menyimpan…';
         try{const result=existing?await updateAddress(existing.id,body):await createAddress(body);if(version!==renderVersion)return;await notify({icon:'success',title:existing?'Alamat diperbarui':'Alamat ditambahkan',text:result.message||'Perubahan alamat berhasil disimpan.'});if(version===renderVersion)await loadAddresses();}
@@ -673,11 +677,12 @@ async function mountAddressesPage(version=++renderVersion){
         el('div',{class:'w-address-form-grid'},
           addressField('Label alamat',addressLabel),addressField('Nama penerima',recipient),addressField('Nomor telepon',phone),addressField('Provinsi',province),addressField('Kota/kabupaten',city),addressField('Kecamatan',district),addressField('Kelurahan/desa',subDistrict),addressField('Kode pos',postalCode),
           addressField('Alamat lengkap',street,'w-address-field-wide'),addressField('Catatan alamat (opsional)',note,'w-address-field-wide')
-        ),locationStatus,isDefaultLabel,formNotice,
+        ),locationStatus,pointPicker.element,isDefaultLabel,formNotice,
         el('div',{class:'w-address-form-actions'},el('button',{class:'w-button w-outline',type:'button',onclick:drawAddresses},'Batal'),save)
       );
       const formHeading=el('header',{class:'w-profile-card-heading'},el('div',{},el('p',{class:'w-profile-eyebrow'},'ALAMAT PENGIRIMAN'),el('h2',{},existing?'Ubah alamat':'Tambah alamat'),el('p',{class:'w-profile-copy'},'Pilih wilayah dari daftar agar alamat cocok dengan layanan pengiriman.')));
       content.replaceChildren(formHeading,form);
+      pointPicker.mount();
       const controllers={};let retryLoad=()=>{};
       const setSelect=(select,placeholder,disabled=true)=>{select.replaceChildren(el('option',{value:''},placeholder));select.value='';select.disabled=disabled;};
       const fetchLevel=async(level,params,select,idKey,nameKey,placeholder,selectedId,selectedName)=>{
@@ -694,8 +699,9 @@ async function mountAddressesPage(version=++renderVersion){
           if(selected)select.value=String(selected[idKey]);
           select.disabled=options.length===0;locationMessage.textContent=options.length?`${label} tersedia.`:`Daftar ${label.toLowerCase()} kosong.`;retryLocation.hidden=true;
         }catch(error){
-          if(controller.signal.aborted||error.name==='AbortError')return;
+          if(controller.signal.aborted||error.name==='AbortError'||version!==renderVersion)return;
           select.replaceChildren(el('option',{value:''},placeholder));select.disabled=true;locationMessage.textContent=error.message||`Daftar ${label.toLowerCase()} gagal dimuat.`;retryLocation.hidden=false;
+          authNotice(error,`Daftar ${label.toLowerCase()} gagal dimuat`);
         }
       };
       const loadProvinces=(id,name)=>fetchLevel('provinces',new URLSearchParams(),province,'province_id','province_name','Pilih provinsi',id,name);
