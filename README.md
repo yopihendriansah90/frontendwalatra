@@ -41,3 +41,4 @@ npm run test:browser
 Audit browser memerlukan Python Playwright/Chromium dan API lokal yang berjalan. Contoh untuk alamat lain: `CATALOG_TEST_API=http://127.0.0.1:8000/api/v1 CATALOG_TEST_URL=http://127.0.0.1:5173 npm run test:browser`.
 
 Tes commerce terisolasi: jalankan `npm run build`, mulai frontend dengan `node scripts/serve-local.mjs --port 5199`, lalu `python3 tests/commerce-browser.py`. Tes ini mengganti respons API di browser, tanpa menulis ke akun customer atau membuat charge provider. Bukti visual dan hasil disimpan di `/tmp/walatra-commerce-evidence`.
+# frontendwalatra
