@@ -1,4 +1,8 @@
 import {randomBytes} from 'node:crypto';
+import {requestURL} from './http-request.mjs';
+import {clientIdentity,identityHeaders} from './client-identity.mjs';
+import {memoryRateLimiter} from './rate-limit.mjs';
+import {memorySessionStore} from './session-store.mjs';
 
 const cookieName='walatra_session';
 const maxBodySize=16*1024;
@@ -21,10 +25,13 @@ async function readJSON(req){
   try{return JSON.parse(body);}catch{throw Object.assign(new Error('Format data tidak valid.'),{status:400});}
 }
 
-export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookies=false,sessionLifetimeMs=12*60*60*1000,upstreamTimeoutMs=20000}){
-  const sessions=new Map();
-  const requestAPI=async(path,{method='GET',body,token,key,binary=false}={})=>{
-    const headers={Accept:'application/json'};
+export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookies=false,sessionLifetimeMs=12*60*60*1000,upstreamTimeoutMs=20000,bridgeSecret='',trustedProxyIPs=[],sessionStore:store=memorySessionStore(),consumeRate=memoryRateLimiter()}){
+  const identify=clientIdentity(trustedProxyIPs);
+  const sessionStore=Object.fromEntries(['get','set','delete'].map(method=>[method,async(...args)=>{
+    try{return await store[method](...args);}catch{throw Object.assign(new Error('Penyimpanan sesi belum tersedia. Silakan coba lagi.'),{status:503});}
+  }]));
+  const requestAPI=async(path,{method='GET',body,token,key,binary=false,clientIP}={})=>{
+    const headers={Accept:'application/json',...(clientIP?identityHeaders(clientIP,method,new URL(apiBaseURL+path).pathname,bridgeSecret):{})};
     if(body!==undefined)headers['Content-Type']='application/json';
     if(token)headers.Authorization=`Bearer ${token}`;
     if(key!==undefined)headers['Idempotency-Key']=key;
@@ -42,6 +49,7 @@ export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookie
   };
   const sendAPI=(res,result)=>{
     const headers=result.retryAfter?{'Retry-After':result.retryAfter}:{};
+    if(result.status>=500){json(res,result.status,{success:false,message:'Layanan sedang bermasalah. Silakan coba lagi.',code:'UPSTREAM_UNAVAILABLE'},headers);return;}
     const data=result.data&&typeof result.data==='object'?{...result.data}:{};
     if(Array.isArray(data.data)){
       data.data=[...data.data];
@@ -52,15 +60,14 @@ export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookie
     }
     json(res,result.status,data,headers);
   };
-  const currentSession=(req,res)=>{
-    const id=cookieValue(req.headers.cookie),session=id?sessions.get(id):null;
+  const currentSession=async(req,res)=>{
+    const id=cookieValue(req.headers.cookie),session=id&&/^[A-Za-z0-9_-]{43}$/.test(id)?await sessionStore.get(id):null;
     if(!session)return null;
-    if(session.expiresAt<Date.now()){sessions.delete(id);res.setHeader('Set-Cookie',cookieHeader('',{secure:secureCookies,maxAge:0}));return null;}
-    session.expiresAt=Date.now()+sessionLifetimeMs;
+    if(session.expiresAt<=Date.now()){await sessionStore.delete(id);res.setHeader('Set-Cookie',cookieHeader('',{secure:secureCookies,maxAge:0}));return null;}
     return {id,session};
   };
-  const clearSession=(res,id)=>{
-    if(id)sessions.delete(id);
+  const clearSession=async(res,id)=>{
+    if(id)await sessionStore.delete(id);
     res.setHeader('Set-Cookie',cookieHeader('',{secure:secureCookies,maxAge:0}));
   };
   const sameOrigin=(req)=>{
@@ -71,27 +78,33 @@ export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookie
   };
 
   return async(req,res)=>{
-    const url=new URL(req.url,'http://localhost');
+    let url;
+    try{url=requestURL(req.url);}catch(error){json(res,400,{success:false,message:error.message});return true;}
     if(!url.pathname.startsWith('/auth/session/'))return false;
-    for(const [id,session] of sessions)if(session.expiresAt<Date.now())sessions.delete(id);
     if(!['GET','POST','PATCH','PUT','DELETE'].includes(req.method)){json(res,405,{success:false,message:'Metode tidak diizinkan.'},{Allow:'GET, POST, PATCH, PUT, DELETE'});return true;}
     if(req.method!=='GET'&&!sameOrigin(req)){json(res,403,{success:false,message:'Permintaan lintas origin ditolak.'});return true;}
     const route=url.pathname.slice('/auth/session'.length);
     try{
+      if(['/request-otp','/verify-otp'].includes(route)&&req.method==='POST'){
+        const key=route+':'+identify(req);let limit;
+        try{limit=await consumeRate(key,route==='/request-otp'?20:30,route==='/request-otp'?900000:300000);}catch{throw Object.assign(new Error('Penyimpanan batas akses belum tersedia. Silakan coba lagi.'),{status:503});}
+        if(!limit.allowed){req.resume();json(res,429,{success:false,message:'Terlalu banyak percobaan. Silakan tunggu.',retry_after:limit.retryAfter},{'Retry-After':String(limit.retryAfter)});return true;}
+      }
       if(route==='/request-otp'&&req.method==='POST'){
         const body=await readJSON(req);
-        sendAPI(res,await requestAPI('/auth/customer/request-otp',{method:'POST',body}));
+        sendAPI(res,await requestAPI('/auth/customer/request-otp',{method:'POST',body,clientIP:identify(req)}));
         return true;
       }
       if(route==='/verify-otp'&&req.method==='POST'){
         const body=await readJSON(req);
-        const verified=await requestAPI('/auth/customer/verify-otp',{method:'POST',body});
+        const verified=await requestAPI('/auth/customer/verify-otp',{method:'POST',body,clientIP:identify(req)});
         if(verified.status<200||verified.status>=300||verified.data?.success!==true){sendAPI(res,verified);return true;}
         const token=verified.data?.data?.token;
         if(typeof token!=='string'||!token.includes('|')){json(res,502,{success:false,message:'Respons login tidak berisi token yang valid.'});return true;}
         const id=randomBytes(32).toString('base64url');
         const session={token,expiresAt:Date.now()+sessionLifetimeMs};
-        sessions.set(id,session);
+        await sessionStore.set(id,session);
+        const oldId=cookieValue(req.headers.cookie);if(oldId&&/^[A-Za-z0-9_-]{43}$/.test(oldId))await sessionStore.delete(oldId);
         res.setHeader('Set-Cookie',cookieHeader(id,{secure:secureCookies,maxAge:sessionLifetimeMs/1000}));
         let me=null;
         try{me=await requestAPI('/auth/me',{token});}catch{}
@@ -101,60 +114,60 @@ export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookie
         return true;
       }
       if(route==='/me'&&req.method==='GET'){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const result=await requestAPI('/auth/me',{token:found.session.token});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         sendAPI(res,result);return true;
       }
       if(route==='/profile'&&req.method==='PATCH'){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const body=await readJSON(req);
         const result=await requestAPI('/auth/customer/profile',{method:'PATCH',body,token:found.session.token});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         sendAPI(res,result);return true;
       }
       if(route==='/addresses'&&['GET','POST'].includes(req.method)){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const body=req.method==='POST'?await readJSON(req):undefined;
         const result=await requestAPI('/addresses',{method:req.method,body,token:found.session.token});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         sendAPI(res,result);return true;
       }
       const addressMatch=route.match(/^\/addresses\/(\d+)$/);
       if(addressMatch&&['PATCH','PUT','DELETE'].includes(req.method)){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const body=req.method==='DELETE'?undefined:await readJSON(req);
         const result=await requestAPI(`/addresses/${addressMatch[1]}`,{method:req.method,body,token:found.session.token});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         sendAPI(res,result);return true;
       }
       if(route==='/cart'&&['GET','DELETE'].includes(req.method)){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const query=new URLSearchParams();
         if(req.method==='GET')for(const value of url.searchParams.getAll('cart_item_ids[]'))query.append('cart_item_ids[]',value);
         const result=await requestAPI('/cart'+(query.size?'?'+query:''),{method:req.method,token:found.session.token});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         sendAPI(res,result);return true;
       }
       if(route==='/cart/items'&&req.method==='POST'){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const body=await readJSON(req),result=await requestAPI('/cart/items',{method:'POST',body,token:found.session.token});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         sendAPI(res,result);return true;
       }
       const cartItemMatch=route.match(/^\/cart\/items\/(\d+)$/);
       if(cartItemMatch&&['PATCH','DELETE'].includes(req.method)){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const body=req.method==='PATCH'?await readJSON(req):undefined;
         const result=await requestAPI(`/cart/items/${cartItemMatch[1]}`,{method:req.method,body,token:found.session.token});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         sendAPI(res,result);return true;
       }
       const commerceRoute=(route==='/checkout/preview'&&req.method==='POST')
@@ -165,24 +178,24 @@ export function createAuthSessionHandler({apiBaseURL,appOrigin=null,secureCookie
         ||(/^\/orders\/\d+\/payment$/.test(route)&&['GET','POST'].includes(req.method))
         ||(/^\/orders\/\d+\/payments\/\d+\/qr-code$/.test(route)&&req.method==='GET');
       if(commerceRoute){
-        const found=currentSession(req,res);
+        const found=await currentSession(req,res);
         if(!found){json(res,401,{success:false,message:'Unauthenticated.'});return true;}
         const query=new URLSearchParams();if(route==='/orders'&&req.method==='GET'&&url.searchParams.has('page'))query.set('page',url.searchParams.get('page'));
         const body=req.method==='POST'?await readJSON(req):undefined;
         const binary=route.endsWith('/qr-code');
         const result=await requestAPI(route+(query.size?'?'+query:''),{method:req.method,body,token:found.session.token,key:req.headers['idempotency-key'],binary});
-        if(result.status===401)clearSession(res,found.id);
+        if(result.status===401)await clearSession(res,found.id);
         if(result.image){res.writeHead(result.status,{'Content-Type':'image/png','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(result.image);}
         else sendAPI(res,result);
         return true;
       }
       if(route==='/logout'&&req.method==='POST'){
-        const found=currentSession(req,res);
-        if(!found){clearSession(res,null);json(res,200,{success:true,message:'Logout berhasil.'});return true;}
+        const found=await currentSession(req,res);
+        if(!found){await clearSession(res,null);json(res,200,{success:true,message:'Logout berhasil.'});return true;}
         let result;
         try{result=await requestAPI('/auth/logout',{method:'POST',token:found.session.token});}
-        catch(error){clearSession(res,found.id);json(res,error.status||502,{success:false,message:error.message});return true;}
-        clearSession(res,found.id);
+        catch(error){await clearSession(res,found.id);json(res,error.status||502,{success:false,message:error.message});return true;}
+        await clearSession(res,found.id);
         if(result.status===401){json(res,200,{success:true,message:'Logout berhasil.'});return true;}
         sendAPI(res,result);return true;
       }

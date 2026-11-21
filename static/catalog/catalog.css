@@ -1,6 +1,8 @@
 @import url('/catalog/vendor/sweetalert2.min.css');
 :root{--w-primary:#075446;--w-hover:#043f35;--w-accent:#80c522;--w-page:#f7f8f4;--w-ink:#203a32;--w-border:#dce5dc;--w-white:#fff}
 body.w-site{background:var(--w-page);color:var(--w-ink);font-family:Montserrat,Arial,sans-serif;font-size:14px;margin:0}
+.w-cart-flying-thumbnail{position:fixed;z-index:1500;width:64px;height:64px;object-fit:contain;padding:4px;border:1px solid #dce5dc;border-radius:10px;background:#fff;box-shadow:0 5px 16px #203a3226;pointer-events:none;transform-origin:center;will-change:transform,opacity}
+@media(prefers-reduced-motion:reduce){.w-cart-flying-thumbnail{display:none}}
 .w-site *{box-sizing:border-box}.w-container{width:100%;max-width:1140px;margin:auto;padding:0 12px}
 .w-site a{text-decoration:none}.w-site a:hover{text-decoration:underline}.w-site a[href],.w-site button,.w-site summary,.w-site select{cursor:pointer}.w-site button:disabled{cursor:not-allowed;opacity:.55}
 .w-site :focus-visible{outline:3px solid var(--w-accent)!important;outline-offset:3px}.w-site input,.w-site select,.w-site button{font:inherit}
@@ -506,3 +508,4 @@ body.w-product-viewer-open{overflow:hidden}
 @keyframes w-viewer-appear{from{opacity:0}to{opacity:1}}
 @media(max-width:767px) and (prefers-reduced-motion:reduce){.w-product-viewer,.w-product-viewer-image{animation:none!important;transition:none!important}}
 .w-search input:hover,.w-search input:focus,.w-search input:active,.w-search button:hover,.w-search button:focus,.w-search button:active{border-color:#cdd5cf;box-shadow:none;outline:none!important;outline-offset:0}
+.w-component-link{display:flex;align-items:center;gap:12px;min-width:0}.w-component-media{display:flex;align-items:center;justify-content:center;flex:0 0 64px;width:64px;height:64px;overflow:hidden}.w-component-media img{width:100%;height:100%;object-fit:contain}.w-component-media .w-no-image{padding:4px;gap:2px;font-size:9px;line-height:1.2}.w-component-media .w-no-image svg{width:24px;height:24px}.w-component-info{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}

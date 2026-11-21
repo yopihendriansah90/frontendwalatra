@@ -45,6 +45,10 @@ Tidak tersedia endpoint detail `GET /addresses/{id}`. Alamat milik akun lain tid
 | `latitude`, `longitude` | Opsional, angka atau null; rentang latitude -90–90 dan longitude -180–180 |
 | `is_default` | Opsional, boolean |
 
+Form tambah/ubah alamat menyediakan pemilih titik OpenStreetMap melalui Leaflet 1.9.4. Pengguna dapat mengetuk peta, menggeser pin, memilih pusat peta dengan keyboard, memakai lokasi perangkat, atau mengisi koordinat langsung. Titik bersifat opsional: kedua koordinat kosong dikirim sebagai `null`; satu koordinat saja ditolak sebelum penyimpanan. Alamat yang diedit memuat kembali koordinat tersimpan. Menghapus titik mengirim kedua field sebagai `null`.
+
+Leaflet dan CSS disertakan melalui build lokal; layer peta memakai `https://tile.openstreetmap.org/{z}/{x}/{y}.png` dengan atribusi OpenStreetMap. Tidak ada API key atau geocoding otomatis. Pemilihan wilayah Everpro tetap diperlukan. Lokasi perangkat hanya diminta ketika pengguna menekan tombolnya, dan membutuhkan secure context serta izin browser. Kegagalan peta/lokasi ditampilkan melalui SweetAlert2; koordinat tetap dapat diisi saat peta gagal. Koordinat kosong tidak dianggap sebagai `0,0` pada checkout.
+
 Nomor `081234567890` dinormalisasi menjadi `6281234567890`. ID lokasi menggunakan nilai dari endpoint Everpro, bukan kode wilayah angka dari sumber lain. Contoh berikut memakai ID sandbox; gunakan nilai dari respons server yang sedang digunakan.
 
 ### Tambah alamat

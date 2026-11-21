@@ -2,9 +2,11 @@
 
 Tanggal audit: **12 November 2026**. Berdasarkan kode, konfigurasi aplikasi yang dimuat, dan pengujian API terisolasi pada repository backend ini.
 
+**Tindak lanjut 13 November 2026:** token checkout kini mengikat snapshot alamat, ongkir, subtotal, dan total; preview tanpa alamat tidak menerbitkan token. Refresh pembayaran hanya membaca status dan tidak membuat charge.
+
 Alur utama: **pilih barang → cart → preview → buat order → buat pembayaran → bayar VA/QRIS → webhook dan verifikasi Midtrans → order lunas**.
 
-> **Kesimpulan:** alur normal memiliki pengujian yang lulus. Pembacaan cart setelah listing dihapus sudah diperbaiki: item tetap tampil sebagai tidak tersedia dan dapat dihapus. Ringkasan pilihan tersedia dan token preview wajib untuk order baru. Efek charge pada proses refresh tertentu dan filter toko tetap menjadi catatan terpisah. Detailnya ada pada bagian 9. Pembayaran yang dikonfigurasi saat audit masih **sandbox**, sehingga hasil ini bukan bukti pembayaran production.
+> **Kesimpulan:** alur normal memiliki pengujian yang lulus. Pembacaan cart setelah listing dihapus sudah diperbaiki: item tetap tampil sebagai tidak tersedia dan dapat dihapus. Ringkasan pilihan tersedia dan token preview wajib untuk order baru. Tindak lanjut checkout dan refresh tercatat pada bagian 9; filter cart per toko tetap menjadi catatan terpisah. Pembayaran yang dikonfigurasi saat audit masih **sandbox**, sehingga hasil ini bukan bukti pembayaran production.
 
 ## 1. Cara membaca diagram
 
@@ -104,7 +106,7 @@ Cart diurutkan berdasarkan waktu terakhir **ditambahkan**, terbaru di atas. Meng
 
 Kirim body ini ke `POST /checkout/preview`. Produk dan bundle dapat dipilih dalam request yang sama. Tanpa `cart_item_ids`, backend memakai seluruh isi cart. Array kosong, ID duplikat, ID asing, atau item yang sudah tidak ada ditolak.
 
-Alamat dapat memakai `address_id` milik customer atau objek `shipping_address`. Jika keduanya dikirim, kode menggunakan `address_id`. Preview boleh tanpa alamat, tetapi `shipping` dan `total` akan `null`; pembuatan order memerlukan alamat.
+Alamat dapat memakai `address_id` milik customer atau objek `shipping_address`. Jika keduanya dikirim, kode menggunakan `address_id`. Preview boleh tanpa alamat, tetapi `shipping`, `total`, dan `checkout_token` akan `null`; pembuatan order memerlukan preview akhir dengan alamat.
 
 ### Langkah B: backend meninjau ulang
 
@@ -112,7 +114,7 @@ Backend memeriksa listing, kelayakan toko, produk, varian, serta komponen bundle
 
 Untuk gudang, backend mencari **irisan penugasan gudang seluruh varian terpilih**, termasuk komponen bundle. Order tidak dipecah menjadi beberapa gudang. Gudang bersama yang dipilih lalu diambil detailnya dari API direktori gudang.
 
-Preview mengembalikan `checkout_available`, `stock_mode`, `stock_verification`, `shipping_origin`, `checkout_token`, `items`, `subtotal`, `shipping`, dan `total`. `checkout_available: true` pada mode unlimited tidak membuktikan stok fisik tersedia. Nilai `stock_verification: pending_manual` berarti stok belum diverifikasi otomatis.
+Preview beralamat mengembalikan `checkout_available`, `stock_mode`, `stock_verification`, `shipping_origin`, `checkout_token`, `items`, `subtotal`, `shipping`, dan `total`. Token mengikat snapshot alamat, ongkir, subtotal, serta total selain pilihan item, quantity, harga, dan kode gudang. `checkout_available: true` pada mode unlimited tidak membuktikan stok fisik tersedia. Nilai `stock_verification: pending_manual` berarti stok belum diverifikasi otomatis.
 
 ### Langkah C: konfirmasi dan buat order
 
@@ -138,7 +140,7 @@ Hanya item terpilih yang dihapus setelah order berhasil. Jika penyalinan foto ga
 
 > **Idempotency order:** retry key yang sama oleh customer yang sama mengembalikan order lama, biasanya HTTP 200, tanpa membuat order atau salinan foto baru. Key yang sama tidak menandakan pembelian baru dan payload baru tidak digunakan untuk mengubah order lama. Validasi bentuk request tetap berlaku sebelum controller mengembalikan order lama.
 
-> **Token checkout:** masa berlaku 15 menit. Token mengikat customer, pilihan item, quantity, harga, dan kode gudang. Token wajib untuk setiap order baru; tanpa token menghasilkan 422 pada field `checkout_token`. Retry key order yang telah berhasil tetap mengembalikan order lama walaupun token kedaluwarsa atau tidak disertakan. Token belum mengikat alamat, ongkir, atau detail komposisi bundle. Untuk alur pembelian, gunakan preview dan kirim tokennya; jangan menganggap token sebagai penguncian seluruh isi halaman checkout.
+> **Token checkout:** masa berlaku 15 menit. Token mengikat customer, pilihan item, quantity, harga, kode gudang, snapshot alamat, ongkir, subtotal, dan total. Perubahan alamat atau hasil ongkir menghasilkan `409 CHECKOUT_CHANGED`; ambil preview baru dan minta persetujuan ulang. Token belum mengikat detail komposisi bundle. Retry key order yang telah berhasil tetap mengembalikan order lama walaupun token kedaluwarsa atau tidak disertakan. Token bukan reservasi stok atau penguncian harga di database.
 
 ## 5. Pembuatan dan pembacaan pembayaran
 
@@ -266,13 +268,13 @@ Perbaikan memuat soft-deleted record khusus untuk identitas cart, memakai pemeri
 
 User dapat menghapus item bermasalah atau memilih item lain yang tersedia. `GET /cart?cart_item_ids[]=...` mengembalikan seluruh cart beserta `selection` berisi ID pilihan, jumlah baris, quantity, subtotal, dan ID tidak tersedia. Ringkasan hanya menghitung pilihan tersedia. Tanpa pilihan, ringkasan GET kosong/nol. Preview menyediakan struktur ringkasan yang sama dengan harga terbaru.
 
-### Prioritas 2: refresh bukan selalu operasi tanpa charge
+### Selesai: refresh status tidak menerbitkan charge
 
-**Terbukti lewat reproduksi:** charge awal timeout dan attempt menjadi `unknown`; provider status berikutnya 404. Pemanggilan `POST .../payment/refresh` kemudian mengirim **POST `/v2/charge`** memakai payload dan `provider_order_id` yang sama. Tidak membuat baris attempt tambahan.
+**Temuan audit awal:** charge awal timeout dan attempt menjadi `unknown`; provider status berikutnya 404. Pemanggilan refresh saat itu mengirim **POST `/v2/charge`** memakai payload dan `provider_order_id` yang sama.
 
-Penyebab: `refresh → synchronizeAttempt → recoverOrCharge → charge` untuk attempt `creating`/`unknown` yang belum ada di provider dan belum kedaluwarsa. Jalur ini juga digunakan service sinkronisasi, termasuk dari job dan panel admin.
+**Perbaikan:** refresh dan sinkronisasi sekarang hanya membaca status. Jika transaksi belum ditemukan, attempt tetap `unknown`; recovery charge hanya dapat dilanjutkan melalui retry request pembayaran awal dengan `Idempotency-Key` yang sama. Pergantian metode tidak membuat charge selama status lama belum pasti.
 
-**Dampak:** tombol sinkronisasi dapat menerbitkan instruksi pembayaran yang sebelumnya belum berhasil diterbitkan. Ini mekanisme recovery saat ini, tetapi tidak memenuhi ekspektasi sinkronisasi yang hanya memeriksa status. Tindak lanjut yang disarankan: bedakan operasi baca/verifikasi provider dari pemulihan charge yang dilakukan melalui request pembuatan pembayaran. Sampai dibenahi, jangan mendeskripsikan refresh sebagai operasi yang pasti tidak membuat charge.
+Tes regresi menguji refresh `unknown`, pergantian metode dengan status 404, dan retry setelah status transaksi ditemukan.
 
 ### Prioritas 2: filter cart per toko belum tersedia di backend
 
@@ -282,7 +284,7 @@ Data toko sudah tersedia untuk pengelompokan frontend. Bila dibutuhkan filter AP
 
 ### Catatan kontrak yang perlu dipertahankan atau diputuskan
 
-- Preview dan token kini wajib untuk order baru. Token tetap belum melindungi perubahan alamat, ongkir, maupun isi komponen bundle. Jika diharapkan menjadi persetujuan seluruh ringkasan pembelian, validasi/fingerprint perlu diperluas.
+- Preview dan token kini wajib untuk order baru. Token melindungi perubahan alamat dan total ongkir; detail komposisi komponen bundle belum masuk fingerprint.
 - Jangan menyebut mode unlimited sebagai stok tersedia secara fisik. Tanpa integrasi stok, order bisa menerima quantity yang belum dibuktikan tersedia di gudang.
 - API direktori gudang tetap merupakan dependensi checkout. Unlimited dan gratis ongkir tidak membuat checkout sepenuhnya mandiri dari layanan eksternal.
 - Total pembayaran adalah satu order lintas toko. Flow ini belum membagi dana atau menghitung pencairan seller.
@@ -309,7 +311,7 @@ php artisan test tests/Feature/Api/V1/SelectedCheckoutTest.php tests/Feature/Api
 php artisan test docs/audits/2026-11-12-cart-checkout-payment/FlowAuditTest.php
 ```
 
-Sesudah perbaikan, seluruh suite serta tes konkurensi PostgreSQL dijalankan; hasil tercantum di bawah. Pengujian PostgreSQL memakai database khusus yang dibuat dan dihapus terpisah dari database aplikasi. Pengujian HTTP lokal berikutnya telah dilakukan dari request OTP sampai pembatalan order; lihat [laporan audit HTTP nyata](../audits/2026-11-12-cart-checkout-payment/live-http-audit.md). Tidak dilakukan uji browser frontend, pengiriman fisik, atau pembuktian webhook publik pada pekerjaan ini.
+Sesudah perbaikan, seluruh suite serta tes konkurensi PostgreSQL dijalankan; hasil tercantum di bawah. Pengujian PostgreSQL memakai database khusus yang dibuat dan dihapus terpisah dari database aplikasi. Pengujian HTTP lokal berikutnya telah dilakukan dari request OTP sampai pembatalan order; lihat [laporan audit HTTP nyata](../audits/2026-11-12-cart-checkout-payment/live-http-audit.md). Audit frontend terpisah dicatat di bawah. Pengiriman fisik dan webhook publik tetap di luar audit.
 
 ### Verifikasi setelah perbaikan cart/checkout
 
@@ -322,7 +324,7 @@ Sesudah perbaikan, seluruh suite serta tes konkurensi PostgreSQL dijalankan; has
 | Kegagalan terpisah | `CustomerOtpAuthTest.php:529`: ekspektasi rate limit OTP 429, respons aktual 200; kegagalan yang telah diketahui sebelum perubahan ini. |
 | Format PHP | Pint diperiksa untuk file yang diubah dan ditambahkan. |
 
-Perubahan mencakup backend dan kontrak API. Frontend perlu memperbarui client agar selalu melakukan preview sebelum order baru, mengirim pilihan cart, menangani `is_available: false`, memakai quantity hasil respons, serta menonaktifkan tombol tambah ketika request berjalan. Tidak ditambahkan idempotency pada tambah cart atau penyimpanan checkbox ke database.
+Perubahan backend dan kontrak API diimplementasikan pada frontend melalui [catatan penerapan cart, checkout, dan pembayaran](cart-checkout-implementation.md). Frontend melakukan preview sebelum order baru, mengirim pilihan cart, menangani `is_available: false`, memakai quantity hasil respons, dan mengunci mutasi selama request berjalan. Tidak ditambahkan idempotency pada tambah cart atau penyimpanan checkbox ke database.
 
 Koleksi request: [Postman cart dan checkout](../postman/cart-checkout.postman_collection.json). Mode pembayaran, stok, dan pemilihan gudang tidak diubah oleh perbaikan ini.
 
@@ -331,6 +333,14 @@ Koleksi request: [Postman cart dan checkout](../postman/cart-checkout.postman_co
 Run HTTP baru menghasilkan **82 pemeriksaan alur lulus** pada server lokal, termasuk login OTP, wilayah Everpro, alamat, cart campuran, barang terhapus, harga berubah, preview wajib, order Rp486.000, retry, serta pembatalan. GET cart pertama pada akun baru sempat menghasilkan 201 dan sudah diperbaiki menjadi 200.
 
 URL gambar publik masih gagal karena domain ngrok pada APP_URL offline (`ERR_NGROK_3200`), sementara berkas gambar lewat server lokal dapat diakses. Pengiriman WhatsApp OTP dan settlement/webhook pembayaran tidak diuji. Hasil otomatis terbaru: **377 lulus, 1 kegagalan OTP lama; 2.880 assertions**. Rincian dan batasan ada pada [laporan HTTP nyata](../audits/2026-11-12-cart-checkout-payment/live-http-audit.md) beserta [bukti JSON](../audits/2026-11-12-cart-checkout-payment/live-http-results.json).
+
+### Audit frontend checkout dan pembayaran — 13 November 2026
+
+- `npm test`: **10 tes lulus**; `npm run build` berhasil; `npm run verify`: **2.366 halaman diperiksa, tanpa error**.
+- `tests/commerce-browser.py`: **39 pemeriksaan lulus**, termasuk preview, perubahan alamat, idempotency/retry, VA, QRIS, polling status, pembatalan, dan breakpoint mobile/desktop. Seluruh API browser pada suite ini ditiru; tidak ada order atau charge nyata.
+- Vibium menjalankan UI melalui login OTP uji, cart, preview checkout, pembuatan order tiruan, dan instruksi BCA VA tiruan melalui session bridge lokal. Tidak ada request ke Midtrans untuk menerbitkan charge.
+- Teks sinkronisasi pembayaran diperbaiki agar tidak menyatakan bahwa refresh membuat ulang charge. Pemulihan tetap menggunakan request pembuatan pembayaran dengan key idempotency yang sama.
+- Tidak diuji: OTP WhatsApp sungguhan, order customer pada backend aktif, charge Midtrans sandbox/production, settlement, atau webhook publik. Pengujian ini memvalidasi alur frontend dengan API tiruan, bukan kesiapan kredensial dan worker deployment.
 
 ## 11. Referensi kode dan dokumentasi
 

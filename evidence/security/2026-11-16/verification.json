@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-16",
+  "application_code_changed": false,
+  "scope": [
+    "frontend working tree",
+    "backend integrated authentication/checkout/payment/log paths"
+  ],
+  "frontend_tests": {
+    "total": 14,
+    "passed": 14
+  },
+  "backend_targeted_tests": {
+    "total": 88,
+    "assertions": 727,
+    "passed": 87,
+    "failed": 1,
+    "failure": "CustomerOtpAuthTest::test_request_limit_by_ip_cannot_be_bypassed_by_changing_phone: expected 429 after 5 requests, actual policy allows 20 per 15 minutes"
+  },
+  "npm_audit": {
+    "reported_vulnerabilities": 0
+  },
+  "composer_audit": {
+    "packages": 10,
+    "advisories": 17
+  },
+  "isolated_malformed_url_probe": {
+    "server_exit_code": 1,
+    "response_bytes": 0,
+    "error": "ERR_INVALID_URL"
+  },
+  "backend_probe_tests": {
+    "database": "sqlite :memory:",
+    "tests": 2,
+    "assertions": 10,
+    "confirmed": [
+      "anonymous invalid webhooks create 2 log rows for 2 requests",
+      "recipient name and precise GPS survive log sanitizer"
+    ]
+  },
+  "bridge_identity_probe": {
+    "mock_upstream_only": true,
+    "backend_client_ips": [
+      "127.0.0.1",
+      "127.0.0.1"
+    ],
+    "forwarded_for_headers": [
+      null,
+      null
+    ]
+  },
+  "http_local_header_probe": {
+    "url": "http://127.0.0.1:5173/checkout/",
+    "status": 200,
+    "present": {
+      "X-Content-Type-Options": "nosniff"
+    },
+    "absent": [
+      "Content-Security-Policy",
+      "X-Frame-Options",
+      "Referrer-Policy",
+      "Permissions-Policy",
+      "Strict-Transport-Security"
+    ]
+  },
+  "limitations": [
+    "production not tested",
+    "no real OTP or payment requests",
+    "no operational database writes",
+    "credential search limited to selected current source and fixture/evidence JSON, not full Git history"
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "count": 57,
+  "count": 59,
   "checks": [
     {
       "name": "Home categories follow API including test category",
@@ -19,7 +19,7 @@
       "passed": true
     },
     {
-      "name": "Live API positions render into exact banner slots",
+      "name": "Live API banners share the homepage carousel",
       "passed": true
     },
     {
@@ -83,11 +83,11 @@
       "passed": true
     },
     {
-      "name": "Mobile category menu exposes API categories",
+      "name": "Mobile drawer exposes API categories",
       "passed": true
     },
     {
-      "name": "Escape closes mobile menu",
+      "name": "Escape closes mobile drawer",
       "passed": true
     },
     {
@@ -111,15 +111,23 @@
       "passed": true
     },
     {
-      "name": "Banner positions map main, secondary top and bottom to matching slots",
+      "name": "All banner positions remain available in one carousel",
       "passed": true
     },
     {
-      "name": "Banner CTA target settings follow API for main and secondary slots",
+      "name": "Banner new-tab CTA is protected",
       "passed": true
     },
     {
-      "name": "Multiple main banners rotate only inside main area",
+      "name": "Banner same-tab CTA follows API",
+      "passed": true
+    },
+    {
+      "name": "Banner without CTA is not a false link",
+      "passed": true
+    },
+    {
+      "name": "Additional banners are reachable through carousel controls",
       "passed": true
     },
     {

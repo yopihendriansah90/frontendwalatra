@@ -14,10 +14,15 @@ export function commerce({el,link,money,main,go,setCartData,cartImage,confirm,no
   const button=(text,action,outline=false)=>el('button',{type:'button',class:`w-button${outline?' w-outline':''}`,onclick:action},text);
   const addressText=a=>[a?.sub_district_name,a?.district||a?.district_name,a?.city||a?.city_name,a?.province||a?.province_name,a?.postal_code].filter(Boolean).join(', ');
   const pointOf=value=>{
+    if(typeof value==='string'){
+      const match=value.match(/^\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*$/);
+      return match?coordinates(match[1],match[2]):null;
+    }
     if(!value||typeof value!=='object')return null;
-    const entries=Object.entries(value),lat=entries.find(([k])=>/^(lat|latitude)$/i.test(k))?.[1],lon=entries.find(([k])=>/^(lng|lon|longitude)$/i.test(k))?.[1];
-    const point=coordinates(lat,lon);if(point)return point;
-    for(const child of Object.values(value)){const found=pointOf(child);if(found)return found;}return null;
+    const point=coordinates(value.latitude??value.lat,value.longitude??value.lon??value.lng);
+    if(point)return point;
+    if(typeof value.coordinates==='string')return pointOf(value.coordinates);
+    return null;
   };
   const mapFrame=(point,label)=>{
     if(!point)return null;
@@ -147,8 +152,15 @@ export function commerce({el,link,money,main,go,setCartData,cartImage,confirm,no
         };
         const drawOrigin=origin=>{
           originPoint.replaceChildren();if(!origin)return;
-          const point=pointOf(origin),label=typeof origin==='string'?origin:[origin.name,origin.label,origin.warehouse_name,origin.address,origin.city,origin.city_name,origin.province,origin.province_name].filter(v=>typeof v==='string'&&v.trim()).join(', ');
-          originPoint.append(el('span',{class:'w-checkout-origin-label'},'DIKIRIM DARI'),el('strong',{},label||'Titik gudang dari server'),point?mapFrame(point,'Peta titik asal pengiriman'):null);
+          const name=typeof origin==='string'?origin:[origin.warehouse_name,origin.name,origin.label].find(v=>typeof v==='string'&&v.trim())||'Gudang terpilih';
+          const address=typeof origin==='object'?[origin.address,origin.postal_code].filter(v=>typeof v==='string'&&v.trim()).join(', '):'';
+          const point=pointOf(origin),rawDistance=typeof origin==='object'?origin.distance_km:null;
+          const distance=rawDistance!==null&&rawDistance!==undefined&&Number.isFinite(Number(rawDistance))?Number(rawDistance):null;
+          const parts=[el('span',{class:'w-checkout-origin-label'},'GUDANG TERPILIH'),el('strong',{},name)];
+          if(address)parts.push(el('p',{},address));
+          if(distance!==null)parts.push(el('p',{},`Jarak garis lurus dari alamat: ${distance.toLocaleString('id-ID',{maximumFractionDigits:3})} km`));
+          if(point)parts.push(mapFrame(point,'Peta titik asal pengiriman'));
+          originPoint.append(...parts);
         };
         const loadMethods=async()=>{methodError='';try{const result=await paymentMethods();if(!active)return;methods=Array.isArray(result.data)?result.data:[];if(!selectedMethod||!methods.some(m=>m.code===selectedMethod))selectedMethod=methods[0]?.code||'';}catch(e){if(!active)return;methodError=e.message||'Metode pembayaran belum dapat dimuat.';error(e,'Metode pembayaran belum dapat dimuat');}drawMethods();submit.disabled=!(selectedAddress&&selectedMethod&&preview?.checkout_available&&preview.checkout_token&&preview.total!==null&&preview.shipping);};
         const invalidate=()=>{preview=null;syncTotal();submit.disabled=true;review.replaceChildren(...chosen.map(snapshot));summary.replaceChildren(row('Subtotal',money(chosen.reduce((sum,item)=>sum+Number(item.subtotal||0),0))),row('Ongkir','Menunggu perhitungan'),row('Total','Belum dihitung'));originPoint.replaceChildren();};
@@ -262,7 +274,13 @@ export function commerce({el,link,money,main,go,setCartData,cartImage,confirm,no
           try{const result=await getOrder(id);if(!active)return;const changed=JSON.stringify(order)!==JSON.stringify(result.data);order=result.data;if(force||changed||(qrURL&&Date.parse(order.payment?.expires_at)<=Date.now()))draw();}finally{fetching=false;}
         };
         const loadQR=async(qr,paymentId)=>{
-          try{const blob=await paymentQR(id,paymentId);if(!active||!qr.isConnected)return;if(qrURL)URL.revokeObjectURL(qrURL);qrURL=URL.createObjectURL(blob);qr.replaceChildren(el('img',{src:qrURL,width:256,height:256,alt:'Kode QRIS pembayaran pesanan'}));}
+          try{
+            const blob=await paymentQR(id,paymentId);if(!active||!qr.isConnected)return;
+            if(qrURL)URL.revokeObjectURL(qrURL);qrURL=URL.createObjectURL(blob);
+            const extension=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/svg+xml':'svg'})[blob.type]||'png';
+            const filename=String(order.order_number||id).replace(/[^a-zA-Z0-9_-]/g,'_');
+            qr.replaceChildren(el('img',{src:qrURL,width:256,height:256,alt:'Kode QRIS pembayaran pesanan'}),link(qrURL,'Download QR',{class:'w-button w-outline',download:`QRIS-${filename}.${extension}`}));
+          }
           catch(e){if(active&&qr.isConnected){qr.replaceChildren(el('p',{role:'status'},'QRIS belum dapat dimuat.'),button('Coba muat QR lagi',()=>run(()=>loadQR(qr,paymentId)),true));error(e,'QRIS belum dapat dimuat');}}
         };
         const submitPaymentIntent=async(currentPayment,renew=false)=>{

@@ -11,7 +11,7 @@ Acuan kontrak: `cart-checkout-payment-flow.md`, `cart-management.md`, serta reso
 
 Semua barang tersedia otomatis dipilih setiap kali halaman cart dibuka. Pilihan checkbox berada di memori halaman; mengubah quantity atau menghapus barang mempertahankan pilihan pengguna, termasuk jika semua centang sengaja dilepas. Ringkasan berasal dari `selection` backend. Data cart tidak tersedia tetap terlihat dan dapat dihapus. Request perubahan dikunci selama berjalan.
 
-Preview wajib untuk order baru dan kedaluwarsa setelah 15 menit. Payload dan key order yang belum pasti tersimpan di sessionStorage per akun. Retry memakai permintaan yang sama meskipun halaman dimuat ulang; key pembayaran terpisah per akun/order. Penyimpanan yang gagal menghentikan request, sehingga mutasi tidak dikirim tanpa key retry yang tersimpan.
+Preview otomatis berjalan saat checkout dibuka dan setiap alamat dipilih/diganti. Request tanpa alamat tetap memeriksa barang dan subtotal; ongkir/total yang `null` ditampilkan sebagai permintaan memilih alamat. Selama preview, status “Memperbarui pesanan…” tampil, tombol order nonaktif, dan pemilih alamat tetap aktif. Nomor revisi request memastikan respons maupun error lama tidak menimpa hasil terbaru. Tombol order hanya dapat memakai token dari preview terbaru untuk alamat saat ini. Preview wajib untuk order baru dan kedaluwarsa setelah 15 menit. Payload dan key order yang belum pasti tersimpan di sessionStorage per akun. Retry memakai permintaan yang sama meskipun halaman dimuat ulang; key pembayaran terpisah per akun/order. Penyimpanan yang gagal menghentikan request, sehingga mutasi tidak dikirim tanpa key retry yang tersimpan.
 
 Status order mengendalikan tindakan. Status attempt tidak dianggap sebagai status akhir order. Pembayaran manual dan simulasi mengikuti respons backend. Polling memakai GET setiap 15 detik saat tab terlihat; sinkronisasi provider hanya lewat tindakan pengguna. QR diambil melalui bridge menggunakan ID order/payment, tanpa mengambil URL backend arbitrer.
 
@@ -20,7 +20,7 @@ Status order mengendalikan tindakan. Status attempt tidak dianggap sebagai statu
 - `npm test`: 10 tes client/model dan integrasi HTTP bridge lulus.
 - `npm run build`: build berhasil.
 - `npm run verify`: 2.366 halaman arsip, dua fixture, tanpa error.
-- `tests/commerce-browser.py`: skenario terisolasi meliputi pilihan toko/item, quantity server, barang tidak tersedia, preview/harga berubah, token kedaluwarsa, retry setelah reload, `202`, pergantian metode, VA, QRIS, polling, status paid, manual/simulasi, pembatalan, pagination, keyboard, dan breakpoint mobile/desktop.
+- `tests/commerce-browser.py`: 39 pemeriksaan terisolasi meliputi pilihan toko/item, quantity server, barang tidak tersedia, preview otomatis dengan/tanpa alamat, respons alamat yang datang tidak berurutan, pengiriman token terbaru, harga berubah, token kedaluwarsa, retry setelah reload, `202`, pergantian metode, VA, QRIS, polling, status paid, manual/simulasi, pembatalan, pagination, keyboard, dan breakpoint mobile/desktop.
 - Screenshot: `/tmp/walatra-commerce-evidence/`.
 
 Browser memakai respons API tiruan. Tes bridge memakai server HTTP lokal. Belum dilakukan order customer nyata, charge sandbox, settlement, atau webhook publik. Konfigurasi produksi dan worker pembayaran tetap tanggung jawab deployment backend. Sesi Node masih disimpan di memori proses; restart memerlukan login ulang.

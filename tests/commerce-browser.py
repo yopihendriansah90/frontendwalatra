@@ -47,7 +47,7 @@ async def main():
     selected=[i for i in items if i['id'] in body['cart_item_ids']]
     reviewed=[{'cart_item_id':i['id'],'quantity':i['quantity'],'unit_price':'16000.00' if i['type']=='product' else i['unit_price'],'subtotal':str(i['quantity']*(16000 if i['type']=='product' else float(i['unit_price'])))} for i in selected]
     total=str(sum(float(i['subtotal']) for i in reviewed))
-    result['data']={'checkout_token':'preview-'+str(request_number),'checkout_available':True,'price_changed':True,'stock_verification':'pending_manual','items':reviewed,'subtotal':total,'shipping':{'fee':'5000.00' if body.get('address_id')==402 else '0.00'} if body.get('address_id') else None,'total':str(float(total)+5000) if body.get('address_id')==402 else total if body.get('address_id') else None}
+    result['data']={'checkout_token':'preview-'+str(request_number),'checkout_available':True,'price_changed':True,'stock_verification':'pending_manual','items':reviewed,'subtotal':total,'shipping':{'fee':'5000.00' if body.get('address_id')==402 else '0.00'} if body.get('address_id') else None,'total':str(float(total)+5000) if body.get('address_id')==402 else total if body.get('address_id') else None,'shipping_origin':{'warehouse_code':'WH-TASIK','warehouse_name':'TASIKMALAYA','address':'Gudang Herbal Tamansari','postal_code':'46196','latitude':-7.3660108,'longitude':108.2280630,'distance_km':6.321,'candidates':[{'warehouse_name':'GUDANG LAIN','latitude':-6.2,'longitude':107.1}]} if body.get('address_id') else None}
    elif path=='/auth/session/orders' and method=='POST':
     order_count+=1
     if order_count==1:status=409;result={'success':False,'message':'Harga berubah lagi','code':'CHECKOUT_CHANGED'}
@@ -150,6 +150,10 @@ async def main():
   await check('Changing method uses a new payment key',payments[-1]['key']!=payments[-2]['key'])
   await page.get_by_alt_text('Kode QRIS pembayaran pesanan').wait_for()
   await check('QRIS uses authenticated bridge and blob image',(await page.get_by_alt_text('Kode QRIS pembayaran pesanan').get_attribute('src')).startswith('blob:') and any(c['path'].endswith('/qr-code') for c in calls))
+  async with page.expect_download() as download_event:
+   await page.get_by_role('link',name='Download QR',exact=True).click()
+  download=await download_event.value
+  await check('QR download saves the authenticated image with order filename',download.suggested_filename=='QRIS-WAL-TEST-501.png' and await download.failure() is None)
   qr_src=await page.get_by_alt_text('Kode QRIS pembayaran pesanan').get_attribute('src')
   reads=sum(c['path']=='/auth/session/orders/501' for c in calls)
   await page.clock.fast_forward(15001)
@@ -182,6 +186,8 @@ async def main():
   await page.locator('#w-checkout-address-401').check()
   await ready();await asyncio.wait_for(slow_preview_done.wait(),timeout=5)
   await check('Slower previous address cannot overwrite newest totals',await page.locator('#w-checkout-address-401').is_checked() and '45.000' not in await page.locator('.w-commerce-page').inner_text() and not await page.get_by_role('button',name='Buat pesanan & bayar',exact=True).is_disabled())
+  origin_text=await page.locator('.w-checkout-origin').inner_text()
+  await check('Checkout shows only the selected warehouse and its distance','TASIKMALAYA' in origin_text and 'Gudang Herbal Tamansari' in origin_text and '6,321 km' in origin_text and 'GUDANG LAIN' not in origin_text and 'null' not in origin_text)
   latest_token='preview-'+str(preview_count)
   await page.get_by_role('button',name='Buat pesanan & bayar',exact=True).click();await page.wait_for_url('**/orders/501/');await ready()
   latest_order=next(c for c in reversed(calls) if c['path']=='/auth/session/orders' and c['method']=='POST')

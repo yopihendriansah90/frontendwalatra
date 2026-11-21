@@ -3,32 +3,35 @@ import asyncio,json,os,urllib.request
 from pathlib import Path
 from urllib.parse import urlsplit,parse_qs
 from playwright.async_api import async_playwright
+from browser_checks import wait_until
 
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'evidence/catalog';BASE=os.environ.get('CATALOG_TEST_URL','http://127.0.0.1:5173');API=os.environ.get('CATALOG_TEST_API','http://127.0.0.1:8000/api/v1');checks=[]
 def check(name,value):
  checks.append({'name':name,'passed':bool(value)});(OUT/'browser-progress.json').write_text(json.dumps(checks,indent=2));print(name,'PASS' if value else 'FAIL',flush=True);assert value,name
 def live(path):
  with urllib.request.urlopen(urllib.request.Request(API+path,headers={'Accept':'application/json'}),timeout=15) as r:return json.load(r)
-async def ready(page):await page.wait_for_function('!document.querySelector("#site-main[aria-busy=true]")');await page.wait_for_load_state('networkidle')
+async def ready(page):
+ await wait_until(page,'!document.querySelector("#site-main[aria-busy=true]")');await page.wait_for_load_state('networkidle')
+ if await page.locator('.swal2-confirm').is_visible():await page.locator('.swal2-confirm').click()
 
 async def main():
  cats=live('/catalog/categories')['data'];live_banners=live('/banners')['data'];catalog=live('/catalog?per_page=50&sort=latest');product=next(i for i in catalog['data'] if i['type']=='product');bundle=next(i for i in catalog['data'] if i['type']=='bundle')
  async with async_playwright() as p:
-  browser=await p.chromium.launch();context=await browser.new_context(viewport={'width':1440,'height':1000});page=await context.new_page();errors=[];writes=[];old_requests=[]
+  browser=await p.chromium.launch();context=await browser.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce');page=await context.new_page();errors=[];writes=[];old_requests=[]
   page.on('pageerror',lambda e:errors.append(str(e)));page.on('request',lambda r:writes.append(r.url) if r.method not in ['GET','HEAD','OPTIONS'] else None);page.on('request',lambda r:old_requests.append(r.url) if urlsplit(r.url).hostname in ['api.naturalfarm.id','apinf.naturalfarm.id'] else None)
   await page.goto(BASE+'/',wait_until='networkidle');await ready(page)
   check('Home categories follow API including test category',await page.locator('.w-category-card').count()==len(cats))
   check('Homepage categories stay in one horizontal scrolling row',await page.locator('.w-category-carousel').evaluate('(x)=>getComputedStyle(x).flexWrap==="nowrap" && x.scrollWidth>x.clientWidth && [...x.children].every(c=>Math.abs(c.getBoundingClientRect().top-x.firstElementChild.getBoundingClientRect().top)<2)'))
   visible_banner_urls=set(await page.locator('.w-home-banners img').evaluate_all('(xs)=>xs.map(x=>x.src)'))
   if live_banners:
-   check('Active homepage banners use API images',all(b['image_url'] in visible_banner_urls for b in live_banners[:3]) and await page.locator('.w-banner-note').count()==0)
+   check('Active homepage banners use API images',bool(visible_banner_urls) and {urlsplit(u).path for u in visible_banner_urls}.issubset({urlsplit(b['image_url']).path for b in live_banners}) and await page.locator('.w-banner-note').count()==0)
   else:
    check('Empty banner API keeps archived homepage banners visible',await page.locator('.w-banner-hero img').count()==1 and await page.locator('.w-banner-note').inner_text()=='Materi promosi arsip sementara.')
-  banner=page.locator('.w-banner-hero img');first_banner=await banner.get_attribute('src');next_button=page.locator('.w-banner-hero .w-banner-next') if live_banners else page.get_by_role('button',name='Banner berikutnya');await next_button.click();check('Banner controls switch active banner source',await banner.get_attribute('src')!=first_banner)
+  banner=page.locator('.w-banner-hero img');first_banner=await banner.get_attribute('src');next_button=page.locator('.w-banner-hero .w-banner-next');await next_button.click();await wait_until(page,'document.querySelector(".w-banner-dot[aria-pressed=true]")?.getAttribute("aria-label").endsWith("2")');check('Banner controls switch active banner source',await page.locator('.w-banner-hero img').last.get_attribute('src')!=first_banner)
   if live_banners:
-   check('Live API positions render into exact banner slots',await page.locator('.w-banner-hero img').count()==1 and await page.locator('.w-banner-secondary-top img').get_attribute('src')==next((b['image_url'] for b in live_banners if b['position']=='secondary_top'),None) and await page.locator('.w-banner-secondary-bottom img').get_attribute('src')==next((b['image_url'] for b in live_banners if b['position']=='secondary_bottom'),None))
+   check('Live API banners share the homepage carousel',await page.locator('.w-banner-dot').count()==len(live_banners) and await page.locator('.w-banner-secondary').count()==0)
   await page.reload();await ready(page);check('Banner remains visible after homepage reload',await page.locator('.w-banner-hero img').count()==1)
-  check('API category icons are used',all([await page.locator(f'.w-category-card[href="/cat/{c["slug"]}/"] img').get_attribute('src')==c['icon_url'] for c in cats if c.get('icon_url')]))
+  check('API category icons are used',all([urlsplit(await page.locator(f'.w-category-card[href="/cat/{c["slug"]}/"] img').get_attribute('src')).path==urlsplit(c['icon_url']).path for c in cats if c.get('icon_url')]))
   keys=await page.locator('[data-item-key]').evaluate_all('(xs)=>xs.map(x=>x.dataset.itemKey)');body=await page.locator('main').inner_text()
   check('Only current API listings appear',all(k in {f"{i['type']}:{i['listing_id']}" for i in catalog['data']} for k in keys))
   check('No archived sale claims remain',not any(t in body for t in ['Berakhir Dalam','Terjual','Flash Sale']))
@@ -47,16 +50,17 @@ async def main():
   await page.goto(BASE+'/search/?find=zzznomatchwalatra',wait_until='networkidle');await ready(page);check('Legacy find normalizes and empty results are honest','q=' in page.url and 'find=' not in page.url and await page.locator('[data-item-key]').count()==0 and 'Tidak ada hasil' in await page.locator('main').inner_text())
   await page.goto(BASE+'/blog/1-butir-telur-berapa-kalori/',wait_until='networkidle');check('Archived article remains readable','1 Butir Telur' in await page.locator('.detail-content-article').inner_text())
   await page.goto(BASE+'/health-tools/bmi-calculator/',wait_until='networkidle');check('Health tool remains interactive',await page.locator('input').count()>3 and 'BMI' in (await page.locator('#site-main').inner_text()).upper())
-  await page.set_viewport_size({'width':390,'height':844});await page.goto(BASE+'/',wait_until='networkidle');await ready(page);await page.get_by_role('button',name='Buka menu kategori').click()
-  check('Mobile category menu exposes API categories',await page.locator('.w-menu[open] .w-menu-panel a').count()>=len(cats));await page.keyboard.press('Escape');check('Escape closes mobile menu',await page.locator('.w-menu[open]').count()==0)
+  await page.set_viewport_size({'width':390,'height':844});await page.goto(BASE+'/',wait_until='networkidle');await ready(page);await page.locator('.w-mobile-toggle').click();await page.locator('.w-mobile-drawer.is-open').wait_for(state='visible')
+  check('Mobile drawer exposes API categories',await page.locator('.w-mobile-drawer.is-open a').count()>=len(cats));await page.keyboard.press('Escape');check('Escape closes mobile drawer',await page.locator('.w-mobile-drawer.is-open').count()==0)
   await page.locator('#w-search').fill(product['name']);await page.get_by_role('button',name='Cari',exact=True).click();await ready(page);check('Mobile icon search works',await page.locator('[data-item-key]').count()>0)
   await page.goto(BASE+'/',wait_until='networkidle');await ready(page)
   check('Mobile categories stay in one horizontally scrollable row',await page.locator('.w-category-carousel').evaluate('(x)=>getComputedStyle(x).flexWrap==="nowrap" && x.scrollWidth>x.clientWidth'));check('Mobile layout stays within viewport',await page.evaluate('document.documentElement.scrollWidth<=innerWidth'));await page.screenshot(path=str(OUT/'mobile-search.png'),full_page=True)
+  if errors or old_requests or writes:print(json.dumps({'runtime_errors':errors,'legacy_requests':old_requests,'writes':writes}),flush=True)
   check('No JavaScript errors, legacy API requests or writes',not errors and not old_requests and not writes)
   await context.close()
 
   # Isolated contract fixtures never change the backend or production catalog.
-  c=await browser.new_context(viewport={'width':1440,'height':1000});page=await c.new_page();mock_errors=[];page.on('pageerror',lambda e:mock_errors.append(str(e)));seen=[];mode='normal'
+  c=await browser.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce');page=await c.new_page();mock_errors=[];page.on('pageerror',lambda e:mock_errors.append(str(e)));seen=[];mode='normal'
   category={'id':1,'name':'Kategori Fixture','slug':'fixture','icon_url':None,'product_count':1,'children':[{'id':2,'name':'Anak Fixture','slug':'anak','icon_url':None,'product_count':1}]}
   prod={'type':'product','listing_id':7,'id':5,'name':'Produk Fixture','slug':'fixture','price':{'min':'25000.00','max':'45000.00'},'image':{'thumb':None,'url':None},'store':{'name':'Toko Satu','slug':'satu'}}
   bund={'type':'bundle','listing_id':7,'id':5,'name':'Bundle Fixture','slug':'bundle-fixture','price':{'value':'40000.00'},'store':{'name':'Toko Dua','slug':'dua'}}
@@ -78,12 +82,17 @@ async def main():
    await r.fulfill(json=data)
   await c.route('**/api/v1/**',route)
   mode='banner_empty';await page.goto(BASE+'/',wait_until='networkidle');await ready(page)
-  check('Empty API response falls back to retained banner snapshot',await page.locator('.w-banner-hero img').get_attribute('src')=='/banners/2188.jpg' and 'arsip sementara' in await page.locator('.w-banner-note').inner_text())
+  check('Empty API response falls back to retained banner snapshot',await page.locator('.w-banner-hero img').get_attribute('src')==BASE+'/banners/2188.jpg' and 'arsip sementara' in await page.locator('.w-banner-note').inner_text())
   mode='normal';await page.goto(BASE+'/',wait_until='networkidle');await ready(page)
-  check('Banner positions map main, secondary top and bottom to matching slots',await page.locator('.w-banner-hero img').get_attribute('src')==BASE+'/banners/1927.jpg' and await page.locator('.w-banner-secondary-top img').get_attribute('src')==BASE+'/banners/2188.jpg' and await page.locator('.w-banner-secondary-bottom img').get_attribute('src')==BASE+'/banners/1458.jpeg')
-  check('Banner CTA target settings follow API for main and secondary slots',await page.locator('.w-banner-hero .w-banner-card').get_attribute('href')=='https://example.com/promo' and await page.locator('.w-banner-hero .w-banner-card').get_attribute('target')=='_blank' and await page.locator('.w-banner-hero .w-banner-card').get_attribute('rel')=='noopener noreferrer' and await page.locator('.w-banner-secondary-top .w-banner-card').get_attribute('href')=='https://example.com/sama-tab' and await page.locator('.w-banner-secondary-top .w-banner-card').get_attribute('target') is None and await page.locator('.w-banner-secondary-bottom a.w-banner-card').count()==0)
-  await page.locator('.w-banner-hero').get_by_role('button',name='Banner utama berikutnya').click()
-  check('Multiple main banners rotate only inside main area',await page.locator('.w-banner-hero img').get_attribute('src')==BASE+'/banners/1793.jpeg' and await page.locator('.w-banner-secondary-top img').get_attribute('src')==BASE+'/banners/2188.jpg')
+  check('All banner positions remain available in one carousel',await page.locator('.w-banner-hero img').get_attribute('src')==BASE+'/banners/1927.jpg' and await page.locator('.w-banner-dot').count()==4)
+  check('Banner new-tab CTA is protected',await page.locator('.w-banner-hero .w-banner-card').get_attribute('href')=='https://example.com/promo' and await page.locator('.w-banner-hero .w-banner-card').get_attribute('target')=='_blank' and await page.locator('.w-banner-hero .w-banner-card').get_attribute('rel')=='noopener noreferrer')
+  await page.locator('.w-banner-next').click()
+  check('Banner same-tab CTA follows API',await page.locator('.w-banner-hero .w-banner-card').get_attribute('href')=='https://example.com/sama-tab' and await page.locator('.w-banner-hero .w-banner-card').get_attribute('target') is None)
+  await page.locator('.w-banner-next').click()
+  check('Banner without CTA is not a false link',await page.locator('.w-banner-hero a.w-banner-card').count()==0)
+  await page.locator('.w-banner-dot').first.click()
+  await page.locator('.w-banner-dot').last.click()
+  check('Additional banners are reachable through carousel controls',await page.locator('.w-banner-hero img').get_attribute('src')==BASE+'/banners/1793.jpeg')
   await page.goto(BASE+'/product/',wait_until='networkidle');await ready(page)
   check('Product/bundle listing identities do not collide',len(set(await page.locator('[data-item-key]').evaluate_all('(xs)=>xs.map(x=>x.dataset.itemKey)')))==3)
   check('Missing images show placeholders',await page.locator('.w-card-media .w-no-image').count()==3)
@@ -98,8 +107,8 @@ async def main():
   await page.locator('.w-thumbnails button').first.click();check('Gallery thumbnail changes main image and original link inline',await page.locator('.w-gallery-main img').get_attribute('src')==BASE+'/banners/2188.jpg' and await page.locator('.w-gallery-main-link').get_attribute('href')==BASE+'/banners/2188.jpg' and await page.locator('.w-thumbnails button').first.get_attribute('aria-pressed')=='true');await page.locator('.w-thumbnails button').nth(3).click()
   check('Selected variant photo shows first and desktop description sits below the gallery',await page.locator('.w-gallery-main img').get_attribute('src')==BASE+'/banners/1927.jpg' and await page.locator('.w-detail-description').evaluate('(d)=>{const g=document.querySelector(".w-gallery").getBoundingClientRect(),r=d.getBoundingClientRect(),i=document.querySelector(".w-detail-info").getBoundingClientRect();return r.top>=g.bottom-1&&r.left<i.left}'))
   check('Description HTML is formatted safely','Deskripsi aman' in await page.locator('.w-description p').inner_text() and await page.locator('.w-description script').count()==0 and await page.locator('.w-description img[onerror]').count()==0 and not await page.evaluate('window.badDescription===true'))
-  await page.locator('.w-detail').evaluate('(x)=>window.__detailNode=x');await page.locator('.w-variant-badge[data-variant-id="11"]').click();await page.wait_for_function('new URLSearchParams(location.search).get("variant")=="11"');check('Variant selection updates URL, price and photo without rebuilding detail','variant=11' in page.url and '25.000' in await page.locator('[data-detail-price]').inner_text() and await page.locator('.w-gallery-main img').get_attribute('src')==BASE+'/banners/1793.jpeg' and await page.locator('.w-gallery-main-link').get_attribute('href')==BASE+'/banners/1793.jpeg' and await page.locator('.w-variant-badge[data-variant-id="11"]').get_attribute('aria-pressed')=='true' and await page.locator('.w-detail').evaluate('(x)=>x===window.__detailNode'))
-  await page.locator('.w-variant-badge[data-variant-id="13"]').click();await page.wait_for_function('new URLSearchParams(location.search).get("variant")=="13"');check('Variant without a photo is selectable and updates its price','variant=13' in page.url and '30.000' in await page.locator('[data-detail-price]').inner_text() and await page.locator('.w-variant-badge[data-variant-id="13"]').inner_text()=='Tanpa foto')
+  await page.locator('.w-detail').evaluate('(x)=>window.__detailNode=x');await page.locator('.w-variant-badge[data-variant-id="11"]').click();await wait_until(page,'new URLSearchParams(location.search).get("variant")=="11"');check('Variant selection updates URL, price and photo without rebuilding detail','variant=11' in page.url and '25.000' in await page.locator('[data-detail-price]').inner_text() and await page.locator('.w-gallery-main img').get_attribute('src')==BASE+'/banners/1793.jpeg' and await page.locator('.w-gallery-main-link').get_attribute('href')==BASE+'/banners/1793.jpeg' and await page.locator('.w-variant-badge[data-variant-id="11"]').get_attribute('aria-pressed')=='true' and await page.locator('.w-detail').evaluate('(x)=>x===window.__detailNode'))
+  await page.locator('.w-variant-badge[data-variant-id="13"]').click();await wait_until(page,'new URLSearchParams(location.search).get("variant")=="13"');check('Variant without a photo is selectable and updates its price','variant=13' in page.url and '30.000' in await page.locator('[data-detail-price]').inner_text() and await page.locator('.w-variant-badge[data-variant-id="13"]').inner_text()=='Tanpa foto')
   check('Selected variant uses Walatra green accent',await page.locator('.w-variant-badge[data-variant-id="13"]').evaluate('(b)=>getComputedStyle(b).borderTopColor==="rgb(7, 84, 70)"'))
   check('Store offer is informational, not a user selection','Toko Dua' in await page.locator('.w-detail-store').inner_text() and await page.locator('select[name=listing]').count()==0)
   mode='nostores';await page.reload();await ready(page);check('Empty stores do not create a purchase choice',await page.locator('select[name=listing]').count()==0 and 'Belum ada penawaran' in await page.locator('main').inner_text())

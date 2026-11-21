@@ -17,5 +17,5 @@ for file in ['dist/catalog/index.html','dist/banners/manifest.json','README.md',
 print('Pemeriksaan paket lulus: katalog dan banner API dengan cadangan snapshot, halaman terpilih, serta audit browser.')
 PY
 archive=walatra-herbal-frontend.tar.gz
-tar --exclude='__pycache__' --exclude='*.pyc' -I 'pigz -1' -cf "$archive" dist retained README.md package.json requirements.txt .env.example iconcategori scripts/build-local.mjs scripts/serve-local.mjs scripts/auth-session.mjs scripts/env.mjs scripts/verify.py scripts/migrate-catalog.py scripts/sanitize-health-state.mjs scripts/package.sh static/catalog static/brand static/banners static/legacy-bridge.js static/noop.js static/mirror.css doc tests evidence/coverage.json evidence/static-check.json evidence/catalog
+tar --exclude='__pycache__' --exclude='*.pyc' -I 'pigz -1' -cf "$archive" dist retained README.md package.json package-lock.json requirements.txt .env.example .env.production.example deploy iconcategori scripts static/catalog static/brand static/banners static/legacy-bridge.js static/noop.js static/mirror.css doc tests evidence/coverage.json evidence/static-check.json evidence/catalog
 sha256sum "$archive" > "$archive.sha256"

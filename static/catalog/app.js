@@ -5,6 +5,7 @@ import {sorts,money,itemPrice,itemKey,detailURL,mediaURL,mediaAssetURL,imageURLs
 import {commerce} from './commerce.js';
 import {createNotifications} from './notifications.js';
 import {addressMap} from './address-map.js';
+import {createBundleComponents} from './bundle-components.js';
 
 const $=(s,r=document)=>r.querySelector(s);
 globalThis.Swal=Swal;
@@ -54,10 +55,10 @@ function refreshCart(){
   return cartLoadPromise;
 }
 function placeholder(){return el('div',{class:'w-no-image',role:'img','aria-label':'Gambar belum tersedia'},icon('image'),el('span',{},'Gambar belum tersedia'));}
-function picture(urls,alt,{category=false,eager=false}={}){
+function picture(urls,alt,{category=false,eager=false,onExhausted}={}){
   if(!urls.length)return category?el('span',{class:'w-icon-fallback',role:'img','aria-label':`Ikon ${alt} belum tersedia`},'◇'):placeholder();
   const img=el('img',{src:urls[0],alt,loading:eager?'eager':'lazy',decoding:'async',width:category?64:400,height:category?64:400,class:category?'w-category-icon':null});
-  let next=1;img.addEventListener('error',()=>{if(next<urls.length)img.src=urls[next++];else img.replaceWith(category?el('span',{class:'w-icon-fallback',role:'img','aria-label':`Ikon ${alt} belum tersedia`},'◇'):placeholder());});return img;
+  let next=1;img.addEventListener('error',()=>{if(next<urls.length)img.src=urls[next++];else{img.replaceWith(category?el('span',{class:'w-icon-fallback',role:'img','aria-label':`Ikon ${alt} belum tersedia`},'◇'):placeholder());onExhausted?.();}});return img;
 }
 function renderDescription(markup){
   const parsed=new DOMParser().parseFromString(String(markup),'text/html'),allowed=new Set(['p','h2','h3','h4','ul','ol','li','strong','b','em','i','br','hr','a','blockquote']);
@@ -133,7 +134,7 @@ function syncMobileNavigation(path){
 }
 function mountMobileDrawer(toggle){
   const close=()=>closeMenus({restoreFocus:true});
-  const menu=el('div',{class:'w-mobile-drawer-menu'},el('div',{class:'w-mobile-drawer-links'},link('/product/','Semua Produk'),link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('/health-tools/','Cek Kesehatan'),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')),el('section',{class:'w-mobile-drawer-categories','aria-labelledby':'w-mobile-categories-title'},el('h2',{id:'w-mobile-categories-title'},'Kategori'),el('div',{class:'w-mobile-category-links'},el('p',{class:'w-category-status',role:'status'},'Memuat kategori…'))));
+  const menu=el('div',{class:'w-mobile-drawer-menu'},el('div',{class:'w-mobile-drawer-links'},link('/product/','Semua Produk'),link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('https://walatraherbal.com/cek_keaslian','Cek Keaslian',{target:'_blank',rel:'noopener noreferrer'}),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')),el('section',{class:'w-mobile-drawer-categories','aria-labelledby':'w-mobile-categories-title'},el('h2',{id:'w-mobile-categories-title'},'Kategori'),el('div',{class:'w-mobile-category-links'},el('p',{class:'w-category-status',role:'status'},'Memuat kategori…'))));
   const filters=el('section',{class:'w-mobile-filter-view',hidden:true},el('h2',{},'Filter produk'),el('div',{class:'w-mobile-filter-slot'},state('Menyiapkan filter…')));
   const drawer=el('div',{id:'w-mobile-drawer',class:'w-mobile-drawer',hidden:true,'aria-hidden':'true',inert:true},el('button',{class:'w-mobile-drawer-backdrop',type:'button','aria-label':'Tutup panel',onclick:close}),el('nav',{class:'w-mobile-drawer-panel','aria-label':'Menu mobile'},el('div',{class:'w-mobile-drawer-heading'},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('button',{class:'w-mobile-drawer-close w-icon-button',type:'button','aria-label':'Tutup panel',onclick:close},icon('close'))),menu,filters));
   drawer.hidden=true;drawer.inert=true;drawer.addEventListener('click',event=>{if(event.target.closest('a'))closeMenus();});
@@ -161,7 +162,7 @@ function mountHeader(){
   const form=el('form',{class:'w-search',role:'search',onsubmit:e=>{e.preventDefault();search();}},searchInput,el('button',{type:'submit','aria-label':'Cari'},icon('search')));
   const account=link('/login/?next='+encodeURIComponent(location.pathname+location.search),'Login',{class:'w-button w-login','data-account-link':''});
   const cartLink=link('/cart/',[icon('cart'),el('span',{},'Cart'),el('span',{class:'w-header-cart-count','data-cart-count':true,'aria-label':'Jumlah item di cart',hidden:true})],{class:'w-header-cart','aria-label':'Buka cart'});
-  header.replaceChildren(el('header',{class:'w-header'},el('div',{class:'w-topbar'},el('div',{class:'w-container'},el('span',{},'Walatra Herbal'),el('nav',{class:'w-toplinks','aria-label':'Tautan informasi'},link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('/product/','Semua Produk')))),el('div',{class:'w-container'},el('div',{class:'w-headrow'},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),link('/health-tools/','Cek Kesehatan',{class:'w-health-link'}),form,account,toggle),el('nav',{class:'w-navrow','aria-label':'Navigasi katalog'},menu,link('/product/','Semua Produk'),el('div',{class:'w-navstrip','aria-label':'Pilihan kategori'})))));
+  header.replaceChildren(el('header',{class:'w-header'},el('div',{class:'w-topbar'},el('div',{class:'w-container'},el('span',{},'Walatra Herbal'),el('nav',{class:'w-toplinks','aria-label':'Tautan informasi'},link('/store/','Lokasi Toko'),link('/blog/','Artikel'),link('/product/','Semua Produk')))),el('div',{class:'w-container'},el('div',{class:'w-headrow'},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),link('https://walatraherbal.com/cek_keaslian','Cek Keaslian',{class:'w-health-link',target:'_blank',rel:'noopener noreferrer'}),form,account,toggle),el('nav',{class:'w-navrow','aria-label':'Navigasi katalog'},menu,link('/product/','Semua Produk'),el('div',{class:'w-navstrip','aria-label':'Pilihan kategori'})))));
   $('.w-headrow',header).insertBefore(cartLink,account);
   mountMobileDrawer(toggle);
   currentUser().then(session=>{if(!session.data?.user)return;if(account.isConnected){account.href='/profile/';account.textContent='Profil';}const mobileAccount=$('[data-mobile-account-link]');if(mobileAccount)mobileAccount.href='/profile/';refreshCart().catch(()=>setCartData(null));}).catch(error=>{if(error.status!==401)console.warn('Status sesi Walatra tidak dapat diperiksa.');});
@@ -171,7 +172,7 @@ function mountHeader(){
     catch(e){$('.w-menu-panel',header).replaceChildren(errorState(e,()=>load(true)));$('.w-navstrip',header).replaceChildren(el('span',{class:'w-category-status'},'Kategori belum dapat dimuat.'));$('.w-mobile-category-links',header).replaceChildren(errorState(e,()=>load(true)));}
   };load();
 }
-function mountFooter(){footer.replaceChildren(el('footer',{class:'w-footer'},el('div',{class:'w-container'},el('div',{},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('small',{},'Produk dan kategori mengikuti katalog Walatra Herbal.')),el('nav',{class:'w-footer-links','aria-label':'Informasi lainnya'},link('/product/','Katalog'),link('/blog/','Artikel'),link('/health-tools/','Cek Kesehatan'),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')))));if(!$('.w-mobile-bottom-nav'))mobileNavigation();}
+function mountFooter(){footer.replaceChildren(el('footer',{class:'w-footer'},el('div',{class:'w-container'},el('div',{},link('/',logo(),{'aria-label':'Beranda Walatra Herbal'}),el('small',{},'Produk dan kategori mengikuti katalog Walatra Herbal.')),el('nav',{class:'w-footer-links','aria-label':'Informasi lainnya'},link('/product/','Katalog'),link('/blog/','Artikel'),link('https://walatraherbal.com/cek_keaslian','Cek Keaslian',{target:'_blank',rel:'noopener noreferrer'}),link('/about-us/','Tentang Kami'),link('/contactus/','Hubungi Kami')))));if(!$('.w-mobile-bottom-nav'))mobileNavigation();}
 function errorState(error,retry,titleTag='h2'){
   const notFound=error.status===404;
   const node=el('div',{class:'w-state',role:'alert'},el(titleTag,{},notFound?'Halaman tidak ditemukan':'Data belum dapat dimuat'),el('p',{},error.message||'Silakan coba lagi.'));
@@ -385,10 +386,17 @@ function variantPicker(variants,selected,onSelect){
 }
 function variantMeta(variant){
   const nodes=[el('p',{class:'w-detail-meta'},`SKU: ${variant.sku||'Belum tersedia'}`)];
-  if(variant.weight_grams!=null)nodes.push(el('p',{class:'w-detail-meta'},`Berat: ${variant.weight_grams} gram`));
-  if(variant.attributes&&typeof variant.attributes==='object')for(const [key,value] of Object.entries(variant.attributes))nodes.push(el('p',{class:'w-detail-meta'},`${key}: ${typeof value==='object'?JSON.stringify(value):value}`));
+  const weight=Number(variant.weight_grams);
+  nodes.push(el('p',{class:'w-detail-meta'},Number.isFinite(weight)&&weight>0?`Berat: ${weight} gram`:'Berat belum tersedia'));
+  const attributeLabels={volume:'Volume',size:'Ukuran',ukuran:'Ukuran',color:'Warna',warna:'Warna',material:'Bahan',bahan:'Bahan',flavor:'Rasa',rasa:'Rasa',isi:'Isi',contents:'Isi',kemasan:'Kemasan',packaging:'Kemasan'};
+  if(variant.attributes&&typeof variant.attributes==='object')for(const [key,value] of Object.entries(variant.attributes)){
+    const label=attributeLabels[key.toLowerCase()];
+    if(!label||!['string','number'].includes(typeof value)||String(value).trim()==='')continue;
+    nodes.push(el('p',{class:'w-detail-meta'},`${label}: ${value}`));
+  }
   return nodes;
 }
+const bundleComponents=createBundleComponents({el,link,picture,request,imageURLs,mediaAssetURL,apiBase,apiMediaBase});
 async function detail(signal,container,type,slug){
   const response=await request(`/catalog/${type==='bundle'?'bundles':'products'}/${encodeURIComponent(slug)}`,new URLSearchParams(),signal);if(signal.aborted)return;
   const data=response.data,params=new URLSearchParams(location.search),chosen=selection(data,params,type);
@@ -416,7 +424,7 @@ async function detail(signal,container,type,slug){
   }
   const description=chosen.listing?.description;let detailDescription=null;
   if(description){const content=[el('h2',{},'Deskripsi'),renderDescription(description)];if(type==='product')detailDescription=el('div',{class:'w-detail-description'},...content);else info.append(...content);}
-  if(type==='bundle')info.append(el('h2',{style:'font-size:18px;margin-top:24px'},'Isi Bundle'),el('ul',{class:'w-components'},...(data.items||[]).map(item=>el('li',{},link(`/product/${encodeURIComponent(item.product.slug)}/`,item.product.name),el('div',{class:'w-detail-meta'},`${item.quantity} × ${item.variant?.name||''}`)))));
+  if(type==='bundle')info.append(el('h2',{style:'font-size:18px;margin-top:24px'},'Isi Bundle'),el('ul',{class:'w-components'},...bundleComponents(data.items||[],signal)));
   const quantity=el('input',{id:'w-detail-cart-quantity',class:'w-cart-quantity',type:'number',min:1,max:99,step:1,value:1,inputmode:'numeric','aria-label':'Jumlah item'});
   const minus=el('button',{type:'button','aria-label':'Kurangi jumlah',disabled:true,onclick:()=>changeQuantity(-1)},'−');
   const plus=el('button',{type:'button','aria-label':'Tambah jumlah',onclick:()=>changeQuantity(1)},'+');
@@ -442,10 +450,41 @@ function authNotice(error,title='Autentikasi gagal'){
   const message=error.status>=500?'Layanan sedang bermasalah. Silakan coba lagi nanti.':error.message||'Silakan coba lagi.';
   return notify({icon:error.status===429?'warning':'error',title,text:message});
 }
+async function animateCartAddition(button){
+  if(!button.isConnected||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const target=document.querySelector(matchMedia('(max-width: 767px)').matches?'[data-mobile-cart-link]':'.w-header-cart');
+  if(!target)return;
+  const destination=(target.querySelector('svg')||target).getBoundingClientRect();
+  if(!destination.width||!destination.height||destination.bottom<=0||destination.top>=innerHeight)return;
+  const image=button.closest('.w-detail')?.querySelector('.w-gallery-main img');
+  const pulse=()=>{
+    if(!target.isConnected||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const icon=target.querySelector('svg')||target;
+    icon.animate?.([{transform:'scale(1)'},{transform:'scale(1.22)',offset:.45},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});
+  };
+  if(!image?.complete||!image.naturalWidth||!Element.prototype.animate){pulse();return;}
+  const imageBox=image.getBoundingClientRect(),buttonBox=button.getBoundingClientRect();
+  const source=imageBox.bottom>0&&imageBox.top<innerHeight?imageBox:buttonBox;
+  const size=64,startX=Math.max(0,Math.min(innerWidth-size,source.left+(source.width-size)/2)),startY=Math.max(0,Math.min(innerHeight-size,source.top+(source.height-size)/2));
+  const dx=destination.left+destination.width/2-startX-size/2,dy=destination.top+destination.height/2-startY-size/2;
+  const thumbnail=el('img',{class:'w-cart-flying-thumbnail',src:image.currentSrc||image.src,alt:'','aria-hidden':'true',width:size,height:size});
+  thumbnail.style.left=`${startX}px`;thumbnail.style.top=`${startY}px`;
+  document.body.append(thumbnail);
+  const animation=thumbnail.animate([
+    {transform:'translate(0,0) scale(1)',opacity:1},
+    {transform:`translate(${dx*.4}px,${dy*.4-55}px) scale(.8)`,opacity:.95,offset:.45},
+    {transform:`translate(${dx}px,${dy}px) scale(.15)`,opacity:0}
+  ],{duration:550,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+  const cancel=()=>animation.cancel();
+  addEventListener('resize',cancel,{once:true});addEventListener('pagehide',cancel,{once:true});
+  try{await animation.finished;pulse();}catch{}finally{thumbnail.remove();removeEventListener('resize',cancel);removeEventListener('pagehide',cancel);}
+}
 async function addToCart(payload,button){
   const original=button.textContent;button.disabled=true;button.textContent='Menambahkan…';
   try{
-    const result=await addCartItem(payload);setCartData(result.data);
+    const result=await addCartItem(payload);
+    await animateCartAddition(button).catch(()=>{});
+    setCartData(result.data);
     await notify({icon:'success',title:'Ditambahkan ke cart',text:result.message||'Item berhasil ditambahkan ke cart.'});
   }catch(error){
     if(error.status===401){location.assign('/login/?next='+encodeURIComponent(location.pathname+location.search));return;}

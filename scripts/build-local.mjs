@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
 import {envNumber, httpURL, loadEnv} from './env.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 loadEnv(root);
@@ -16,12 +17,18 @@ fs.cpSync(path.join(root,'static/catalog'),path.join(temporary,'catalog'),{recur
 const swalDist=path.join(root,'node_modules/sweetalert2/dist');
 fs.mkdirSync(path.join(temporary,'catalog/vendor'),{recursive:true});
 for(const file of ['sweetalert2.esm.all.min.js','sweetalert2.min.css'])fs.copyFileSync(path.join(swalDist,file),path.join(temporary,'catalog/vendor',file));
+const leafletDist=path.join(root,'node_modules/leaflet/dist');
+fs.mkdirSync(path.join(temporary,'catalog/vendor/leaflet'),{recursive:true});
+for(const file of ['leaflet-src.esm.js','leaflet.css'])fs.copyFileSync(path.join(leafletDist,file),path.join(temporary,'catalog/vendor/leaflet',file));
+fs.cpSync(path.join(leafletDist,'images'),path.join(temporary,'catalog/vendor/leaflet/images'),{recursive:true});
+fs.copyFileSync(path.join(root,'node_modules/leaflet/LICENSE'),path.join(temporary,'catalog/vendor/leaflet/LICENSE'));
 if(fs.existsSync(path.join(root,'static/banners/manifest.json')))fs.cpSync(path.join(root,'static/banners'),path.join(temporary,'banners'),{recursive:true});
 for(const file of ['mirror.css','legacy-bridge.js','noop.js'])fs.copyFileSync(path.join(root,'static',file),path.join(temporary,file));
 const apiBaseURL=httpURL('API_BASE_URL','http://127.0.0.1:8000/api/v1');
+const apiMediaBaseURL=httpURL('API_MEDIA_BASE_URL',new URL(apiBaseURL).origin,{originOnly:true});
 const catalogTimeoutMs=envNumber('API_REQUEST_TIMEOUT_MS',15000,{min:1000,max:120000});
 const searchDebounceMs=envNumber('SEARCH_DEBOUNCE_MS',350,{min:0,max:5000});
-fs.writeFileSync(path.join(temporary,'catalog/config.js'),'globalThis.WALATRA_CONFIG='+JSON.stringify({apiBaseURL,apiTimeoutMs:catalogTimeoutMs,searchDebounceMs})+';\n');
+fs.writeFileSync(path.join(temporary,'catalog/config.js'),'globalThis.WALATRA_CONFIG='+JSON.stringify({apiBaseURL,apiMediaBaseURL,apiTimeoutMs:catalogTimeoutMs,searchDebounceMs})+';\n');
 fs.copyFileSync(path.join(root,'static/catalog/index.html'),path.join(temporary,'index.html'));
 fs.copyFileSync(path.join(source,'queries.json'),path.join(temporary,'legacy-query.json'));
 fs.copyFileSync(path.join(source,'fixtures.js'),path.join(temporary,'legacy-fixtures.js'));
@@ -30,6 +37,7 @@ const logoFile=path.join(temporary,'_media/cdn/images/logo_naturalfarm.svg');fs.
 fs.writeFileSync(logoFile,`<svg xmlns="http://www.w3.org/2000/svg" width="178.05093mm" height="40.014572mm" viewBox="91 101 2010 525" role="img" aria-labelledby="brand-title"><title id="brand-title">Walatra Herbal</title><image width="2172" height="724" href="data:image/png;base64,${logo}"/></svg>`);
 fs.writeFileSync(path.join(temporary,'_redirects'),['/ /catalog/index.html 200','/product /catalog/index.html 200','/product/* /catalog/index.html 200','/bundle/* /catalog/index.html 200','/cat/* /catalog/index.html 200','/search /catalog/index.html 200','/search/* /catalog/index.html 200','/login /catalog/index.html 200','/login/* /catalog/index.html 200','/profile /catalog/index.html 200','/profile/* /catalog/index.html 200','/cart /catalog/index.html 200','/cart/* /catalog/index.html 200','/checkout /catalog/index.html 200','/checkout/* /catalog/index.html 200','/orders /catalog/index.html 200','/orders/* /catalog/index.html 200'].join('\n')+'\n');
 fs.writeFileSync(path.join(temporary,'404.html'),'<!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Halaman tidak ditemukan | Walatra Herbal</title><h1>Halaman tidak ditemukan</h1><p><a href="/product/">Buka katalog Walatra Herbal</a></p></html>');
+execFileSync('python3',[path.join(root,'scripts/remove-legacy-brand.py'),temporary],{stdio:'inherit'});
 fs.rmSync(output,{recursive:true,force:true});fs.renameSync(temporary,output);
 const manifest=JSON.parse(fs.readFileSync(path.join(source,'manifest.json')));
 const coverage={source:'Walatra catalog API',api_base_url:apiBaseURL,catalog_mode:'live',auth_mode:'Node same-origin session bridge',catalog_snapshots:0,banner_source:'live Walatra banners API with archived banner fallback when unavailable or empty',retained_pages:manifest.pages,pages_captured:manifest.pages.length,html_files:new Set(manifest.pages.map(p=>p.file)).size,dynamic_routes:['/','/product/','/product/:slug/','/bundle/:slug/','/cat/:slug/','/search/','/login/','/profile/','/cart/','/checkout/','/orders/','/orders/:id/'],static_data_snapshots:manifest.fixtures,legacy_catalog_removed:true};
